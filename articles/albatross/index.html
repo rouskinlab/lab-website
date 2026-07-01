@@ -1,0 +1,961 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reading structure out of sequence alone</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spectral:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0E0A1F;
+  --ink-2:#140E29;
+  --panel:#1A1336;
+  --panel-2:#221A44;
+  --line:#312654;
+  --mist:#BAB2D6;
+  --mist-dim:#7E76A0;
+  --paper:#F2EEFF;
+  --signal:#F2683C;   /* magma coral */
+  --peak:#FBC02D;     /* magma yellow */
+  --violetA:#9D7CD8;
+  /* nucleotide functional colors */
+  --nA:#3FB9B0;
+  --nC:#F4A259;
+  --nG:#9D7CD8;
+  --nU:#EC6A88;
+  --serif:"Spectral",Georgia,"Times New Roman",serif;
+  --disp:"Space Grotesk",-apple-system,system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,monospace;
+  --measure:42rem;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--ink);color:var(--mist);
+  font-family:var(--serif);font-size:18px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;overflow-x:hidden;
+}
+body::before{
+  content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(900px 600px at 78% -8%, rgba(242,104,60,.10), transparent 60%),
+    radial-gradient(800px 700px at 8% 12%, rgba(157,124,216,.10), transparent 55%);
+}
+#progress{
+  position:fixed;top:0;left:0;height:3px;width:0;z-index:60;
+  background:linear-gradient(90deg,#451077,#9f2f7f,#f1605d,#fcc433);
+}
+.wrap{position:relative;z-index:1;max-width:var(--measure);margin:0 auto;padding:0 24px}
+.bleed{max-width:1080px;margin:0 auto;padding:0 24px}
+
+/* ---------- header / track switch ---------- */
+.topbar{
+  position:sticky;top:0;z-index:50;display:flex;justify-content:space-between;align-items:center;
+  gap:12px;padding:10px 20px;background:rgba(14,10,31,.72);backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line);
+}
+.brand{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--mist-dim)}
+.brand b{color:var(--signal);font-weight:600}
+.track{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--mist-dim)}
+.track span{display:none}
+@media(min-width:640px){.track span{display:inline}}
+.track button{
+  font-family:var(--mono);font-size:11px;letter-spacing:.06em;
+  background:transparent;color:var(--mist);border:1px solid var(--line);
+  padding:5px 10px;border-radius:999px;cursor:pointer;transition:.18s;
+}
+.track button:hover{border-color:var(--violetA);color:var(--paper)}
+.track button[aria-pressed="true"]{background:var(--signal);border-color:var(--signal);color:#1a0d08;font-weight:600}
+
+/* ---------- hero ---------- */
+.hero{position:relative;min-height:92vh;display:flex;align-items:center;overflow:hidden}
+#heroCanvas{position:absolute;inset:0;width:100%;height:100%;opacity:.55}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(180deg,rgba(14,10,31,.2),rgba(14,10,31,.55) 55%,var(--ink))}
+.hero-inner{position:relative;z-index:2;max-width:760px;margin:0 auto;padding:0 24px;text-align:left}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--signal);margin-bottom:22px}
+.eyebrow .dim{color:var(--mist-dim)}
+h1.title{
+  font-family:var(--disp);font-weight:600;color:var(--paper);
+  font-size:clamp(2.5rem,7vw,4.6rem);line-height:1.02;letter-spacing:-.02em;margin:0 0 24px;
+}
+h1.title em{font-family:var(--serif);font-style:italic;font-weight:400;color:var(--peak)}
+.lede{font-size:clamp(1.05rem,2.4vw,1.3rem);max-width:40rem;color:var(--mist)}
+.lede b{color:var(--paper);font-weight:600}
+.scrollcue{margin-top:42px;font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--mist-dim);display:flex;align-items:center;gap:10px}
+.scrollcue .ln{width:34px;height:1px;background:var(--mist-dim);animation:cue 1.8s ease-in-out infinite}
+@keyframes cue{0%,100%{opacity:.3;transform:translateX(0)}50%{opacity:1;transform:translateX(6px)}}
+
+/* ---------- sections ---------- */
+section.chap{padding:88px 0 24px}
+.kicker{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--mist-dim);margin-bottom:14px}
+.kicker b{color:var(--signal);font-weight:600}
+h2{font-family:var(--disp);font-weight:600;color:var(--paper);font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.1;letter-spacing:-.015em;margin:0 0 22px}
+h3{font-family:var(--disp);font-weight:500;color:var(--paper);font-size:1.15rem;letter-spacing:-.01em;margin:34px 0 10px}
+p{margin:0 0 18px}
+p .hl{color:var(--paper);font-weight:600}
+a{color:var(--peak);text-decoration:none;border-bottom:1px solid rgba(251,192,45,.35)}
+a:hover{border-color:var(--peak)}
+.term{color:var(--violetA);border-bottom:1px dotted rgba(157,124,216,.6);cursor:help}
+.mono{font-family:var(--mono)}
+
+/* nucleotide pills inline */
+.nt{font-family:var(--mono);font-weight:600;padding:0 2px}
+.nt.A{color:var(--nA)} .nt.C{color:var(--nC)} .nt.G{color:var(--nG)} .nt.U{color:var(--nU)}
+
+/* ---------- audience notes ---------- */
+.note{
+  border-left:2px solid var(--line);padding:14px 16px;margin:22px 0;border-radius:0 8px 8px 0;
+  background:var(--ink-2);font-size:15.5px;line-height:1.55;transition:.2s;
+}
+.note .tag{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;display:inline-block;margin-bottom:6px}
+.note.bio{border-left-color:var(--nA)} .note.bio .tag{color:var(--nA)}
+.note.ai{border-left-color:var(--violetA)} .note.ai .tag{color:var(--violetA)}
+.note p{margin:0;color:var(--mist)}
+body[data-track="ai"] .note.ai{display:none}
+body[data-track="ai"] .note.bio{background:var(--panel);border-left-width:3px}
+body[data-track="bio"] .note.bio{display:none}
+body[data-track="bio"] .note.ai{background:var(--panel);border-left-width:3px}
+
+/* ---------- figure / instrument panels ---------- */
+.fig{
+  margin:34px auto;background:linear-gradient(180deg,var(--panel),var(--ink-2));
+  border:1px solid var(--line);border-radius:16px;padding:22px;
+  box-shadow:0 24px 60px -30px rgba(0,0,0,.8);
+}
+.fig.full{max-width:1080px}
+.fig-head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px;flex-wrap:wrap}
+.fig-title{font-family:var(--disp);font-weight:600;color:var(--paper);font-size:1rem}
+.fig-tag{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--mist-dim);border:1px solid var(--line);border-radius:6px;padding:2px 7px;white-space:nowrap}
+.fig-sub{font-family:var(--serif);font-size:14.5px;color:var(--mist-dim);margin-bottom:16px}
+.caption{font-size:13.5px;color:var(--mist-dim);font-style:italic;margin-top:14px;line-height:1.5}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:4px 0 16px}
+.btn{
+  font-family:var(--mono);font-size:12px;letter-spacing:.04em;cursor:pointer;
+  background:var(--panel-2);color:var(--mist);border:1px solid var(--line);
+  border-radius:8px;padding:8px 13px;transition:.15s;
+}
+.btn:hover{border-color:var(--violetA);color:var(--paper)}
+.btn[aria-pressed="true"],.btn.on{background:var(--signal);border-color:var(--signal);color:#1a0d08;font-weight:600}
+.btn.ghost[aria-pressed="true"]{background:var(--violetA);border-color:var(--violetA);color:#150b22}
+.slider-row{display:flex;align-items:center;gap:14px;margin:8px 0 4px;flex-wrap:wrap}
+.slider-row label{font-family:var(--mono);font-size:12px;color:var(--mist-dim);min-width:0}
+input[type=range]{-webkit-appearance:none;appearance:none;height:4px;border-radius:4px;background:var(--line);outline:none;flex:1;min-width:140px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--peak);cursor:pointer;box-shadow:0 0 0 3px rgba(251,192,45,.2)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border:none;border-radius:50%;background:var(--peak);cursor:pointer}
+
+/* readouts */
+.readouts{display:flex;gap:26px;flex-wrap:wrap;margin-top:14px}
+.ro{font-family:var(--mono)}
+.ro .k{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--mist-dim)}
+.ro .v{font-size:1.5rem;color:var(--paper);font-weight:600;line-height:1.1}
+.ro .v small{font-size:.8rem;color:var(--mist-dim);font-weight:400}
+
+/* mutate-watch layout */
+.mw-grid{display:grid;grid-template-columns:1fr;gap:20px}
+@media(min-width:760px){.mw-grid{grid-template-columns:1.05fr .95fr}}
+.seqrow{display:flex;gap:0;justify-content:center;flex-wrap:nowrap;font-family:var(--mono)}
+.base{
+  width:30px;height:34px;display:flex;align-items:center;justify-content:center;
+  font-size:17px;font-weight:600;cursor:pointer;border-radius:7px;position:relative;
+  transition:.15s;user-select:none;
+}
+.base:hover{background:var(--panel-2)}
+.base.sel{background:var(--signal);color:#1a0d08 !important;box-shadow:0 0 0 2px var(--peak)}
+.base.partner{box-shadow:inset 0 0 0 2px var(--peak)}
+.baselabel{display:flex;justify-content:center;gap:0;font-family:var(--mono);font-size:9px;color:var(--mist-dim)}
+.baselabel span{width:30px;text-align:center}
+.barwrap{display:flex;gap:0;justify-content:center;align-items:flex-end;height:120px;margin-top:6px}
+.bar{width:30px;display:flex;align-items:flex-end;justify-content:center}
+.bar i{display:block;width:14px;background:linear-gradient(180deg,var(--peak),var(--signal));border-radius:3px 3px 0 0;transition:height .5s cubic-bezier(.2,.8,.2,1);min-height:1px}
+.bar.is-partner i{box-shadow:0 0 16px rgba(251,192,45,.6)}
+.bar.is-self i{background:var(--line)}
+.altbtns{display:flex;gap:6px;justify-content:center;margin-top:8px}
+.altbtns .btn{padding:6px 11px}
+.mw-note{font-size:14.5px;color:var(--mist);min-height:48px;background:var(--ink-2);border-radius:8px;padding:11px 14px;border:1px solid var(--line)}
+.mw-note b{color:var(--peak)}
+
+/* canvases */
+.cv{display:block;width:100%;height:auto;border-radius:10px;background:#000;border:1px solid var(--line)}
+.twocol{display:grid;grid-template-columns:1fr;gap:18px}
+@media(min-width:680px){.twocol{grid-template-columns:1fr 1fr}}
+.cv-label{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--mist-dim);text-align:center;margin-bottom:8px;text-transform:uppercase}
+
+/* arc structure svg holder */
+.svgbox{width:100%;overflow:visible}
+.legend{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:11.5px;color:var(--mist-dim);margin-top:10px;justify-content:center}
+.legend i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:6px;vertical-align:middle}
+
+/* bars chart generic */
+.chart{display:flex;align-items:flex-end;gap:6px;height:220px;padding:0 4px}
+.grp{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1;min-width:0}
+.grp .bars{display:flex;align-items:flex-end;gap:4px;height:180px}
+.grp .bars i{width:14px;border-radius:3px 3px 0 0;transition:height .6s cubic-bezier(.2,.8,.2,1)}
+.grp .lab{font-family:var(--mono);font-size:10.5px;color:var(--mist-dim);text-align:center}
+
+/* dot-strip distributions */
+.dist{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:8px}
+.distcell{background:var(--ink-2);border:1px solid var(--line);border-radius:10px;padding:10px 8px}
+.distcell .t{font-family:var(--mono);font-size:11px;color:var(--mist-dim);text-align:center;margin-bottom:6px}
+
+/* pullquote */
+.pull{font-family:var(--serif);font-style:italic;font-size:clamp(1.3rem,3.4vw,1.9rem);line-height:1.3;color:var(--paper);border-left:3px solid var(--signal);padding-left:22px;margin:40px 0}
+.pull span{color:var(--peak)}
+
+/* limitations list */
+.lims{list-style:none;padding:0;margin:18px 0}
+.lims li{border-top:1px solid var(--line);padding:16px 0;display:flex;gap:16px}
+.lims li .n{font-family:var(--mono);color:var(--signal);font-size:13px;flex:0 0 auto;width:28px}
+.lims li b{color:var(--paper);font-weight:600}
+
+/* footer */
+footer{margin-top:80px;border-top:1px solid var(--line);padding:48px 0 70px}
+.reflist{font-family:var(--mono);font-size:13px;color:var(--mist-dim);line-height:1.9}
+.reflist a{color:var(--mist)}
+.foot-note{font-size:13px;color:var(--mist-dim);font-style:italic;margin-top:24px}
+
+/* tooltip */
+#tip{
+  position:fixed;z-index:80;max-width:280px;background:var(--panel-2);border:1px solid var(--violetA);
+  color:var(--mist);font-family:var(--serif);font-size:14px;line-height:1.5;padding:11px 13px;border-radius:9px;
+  pointer-events:none;opacity:0;transition:opacity .12s;box-shadow:0 16px 40px -16px #000;
+}
+#tip b{color:var(--paper)}
+.lab-home-link{
+  position:fixed;left:18px;bottom:18px;z-index:90;
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--mist);background:rgba(14,10,31,.78);border:1px solid var(--line);
+  padding:9px 11px;border-radius:8px;text-decoration:none;backdrop-filter:blur(10px)
+}
+.lab-home-link:hover{border-color:var(--signal);color:var(--paper)}
+
+@media (prefers-reduced-motion: reduce){
+  *{animation:none !important;scroll-behavior:auto}
+  .bar i,.grp .bars i{transition:none}
+}
+</style>
+</head>
+<body data-track="both">
+<a class="lab-home-link" href="../../">Rouskin Lab</a>
+<div id="progress"></div>
+<div id="tip"></div>
+
+<div class="topbar">
+  <div class="brand">Albatross &middot; <b>dependency mapping</b></div>
+  <div class="track">
+    <span>I'm coming from</span>
+    <button data-track="ai" aria-pressed="false">AI</button>
+    <button data-track="bio" aria-pressed="false">Biology</button>
+    <button data-track="both" aria-pressed="true">Both</button>
+  </div>
+</div>
+
+<!-- ================= HERO ================= -->
+<header class="hero">
+  <canvas id="heroCanvas"></canvas>
+  <div class="hero-grad"></div>
+  <div class="hero-inner">
+    <div class="eyebrow">RNA structure from sequence alone <span class="dim">/ an explainer</span></div>
+    <h1 class="title">How an RNA language model exposes structure from sequence.</h1>
+    <p class="lede">Albatross starts from a restrained question: if a model trained only to recover missing nucleotides is perturbed at one position, which other positions change their predictions? In structured IRES RNAs, those dependencies often trace the molecule's <b>hidden folded structure</b>. Here is how the signal appears &mdash; and where it quietly breaks.</p>
+    <div class="scrollcue"><span class="ln"></span> scroll to begin</div>
+  </div>
+</header>
+
+<!-- ================= 01 PROBLEM ================= -->
+<section class="chap" id="s1">
+  <div class="wrap">
+    <div class="kicker"><b>01</b> &nbsp;/&nbsp; the thing we cannot see</div>
+    <h2>A code we can read but not fold</h2>
+    <p>Picornaviruses &mdash; polio, the common cold, hepatitis A &mdash; can't start translation the normal way. Instead, a long folded stretch of RNA at the front of their genome, an <span class="term" data-tip="IRES = Internal Ribosome Entry Site: a structured RNA region that recruits the ribosome directly, bypassing the usual cap-dependent start. In picornaviruses it can run 400&ndash;1500 nucleotides.">IRES</span>, grabs the ribosome by its <span class="hl">shape</span>. Shape is everything; the same letters folded differently behave differently.</p>
+    <p>The authors measured how strongly 96 of these IRESes drive translation, across six human and animal cell types. The newest class (Type&nbsp;V) drives roughly <span class="hl">twice</span> the output of EMCV, the element everyone uses in gene therapy, and most IRESes are <span class="hl">tissue-specific</span>. Rich behavior &mdash; which demands a structural explanation. The problem: we have experimentally solved structures for only a handful.</p>
+
+    <aside class="note bio">
+      <div class="tag">For AI readers &middot; biology primer</div>
+      <p>RNA is a string over a 4-letter alphabet (<span class="nt A">A</span> <span class="nt C">C</span> <span class="nt G">G</span> <span class="nt U">U</span>). It folds back on itself: complementary letters pair (<span class="nt A">A</span>&ndash;<span class="nt U">U</span>, <span class="nt G">G</span>&ndash;<span class="nt C">C</span>), forming double-stranded <b>stems</b> separated by single-stranded <b>loops</b>. That folded pattern of pairs is the <b>secondary structure</b> &mdash; the thing that determines function.</p>
+    </aside>
+    <aside class="note ai">
+      <div class="tag">For biology readers &middot; framing</div>
+      <p>Think of structure prediction here as a sequence-to-graph problem: input is a string of length <span class="mono">N</span>; the target is which positions pair with which. Classical folding tools optimize thermodynamics; we'll instead ask what a trained neural network has implicitly learned about those pairings.</p>
+    </aside>
+  </div>
+</section>
+
+<!-- ================= 02 INCUMBENT ================= -->
+<section class="chap" id="s2">
+  <div class="wrap">
+    <div class="kicker"><b>02</b> &nbsp;/&nbsp; the incumbent and its blind spot</div>
+    <h2>Covariation needs a crowd</h2>
+    <p>The gold standard for finding pairs without a microscope is <span class="term" data-tip="Covariation: if positions i and j are paired, evolution keeps them complementary. A mutation at i is compensated by a matching change at j across related sequences. Tools like R-scape / CaCoFold detect these correlated changes in a multiple sequence alignment.">covariation</span>: line up many related sequences and look for pairs of positions that mutate <span class="hl">together</span> to stay complementary. It works beautifully &mdash; when you have a good alignment of many close relatives.</p>
+    <p>Picornaviral IRESes are notoriously divergent. For the strangest ones you might find only a handful of relatives, and no clean alignment at all. Covariation simply has nothing to work with. That is the gap.</p>
+    <div class="pull">What if you could read the pairs out of a <span>single</span> sequence &mdash; no alignment, no relatives?</div>
+  </div>
+</section>
+
+<!-- ================= 03 MUTATE-WATCH (signature) ================= -->
+<section class="chap" id="s3">
+  <div class="wrap">
+    <div class="kicker"><b>03</b> &nbsp;/&nbsp; the core gesture</div>
+    <h2>What a dependency map is</h2>
+    <p>Take a model trained on one job only: given an RNA sequence with a position hidden, guess the missing letter. To do that well across millions of sequences, it has to internalize how positions constrain each other. <span class="hl">Base-paired positions constrain each other the most.</span></p>
+    <p>So we run a tiny experiment, position by position. Mutate one nucleotide. Re-run the model. Ask: <span class="hl">whose prediction changed?</span> The position that reacts most is, overwhelmingly, the base-pairing partner. Try it &mdash; click a nucleotide below.</p>
+
+    <aside class="note ai">
+      <div class="tag">For biology readers &middot; AI primer</div>
+      <p>A <b>masked language model</b> is trained by hiding ~15% of tokens and predicting them from the rest &mdash; the same objective behind BERT. No labels beyond the sequence itself. <b>Fine-tuning</b> means continuing that same training on a narrower set (here, IRES sequences) so the model specializes.</p>
+    </aside>
+  </div>
+
+  <div class="fig full" id="mwFig">
+    <div class="fig-head">
+      <div class="fig-title">Perturb &amp; watch</div>
+      <div class="fig-tag">interactive &middot; schematic hairpin</div>
+    </div>
+    <div class="fig-sub">A 14-nt hairpin: a 5-pair stem closed by a small loop. Click a position to mutate it; the bars show how much the model's confidence shifts at every other position.</div>
+    <div class="mw-grid">
+      <div>
+        <div class="cv-label">the molecule &mdash; click a base to perturb it</div>
+        <div class="svgbox"><svg id="mwArc" viewBox="0 0 460 200" width="100%" aria-label="hairpin arc diagram"></svg></div>
+        <div class="altbtns" id="mwAlts"></div>
+      </div>
+      <div>
+        <div class="cv-label">|change in model's prediction| at each position</div>
+        <div class="baselabel" id="mwIdx"></div>
+        <div class="barwrap" id="mwBars"></div>
+        <div class="seqrow" id="mwSeq" style="margin-top:4px"></div>
+      </div>
+    </div>
+    <div class="mw-note" id="mwMsg">Pick any nucleotide above. Watch which other position reacts.</div>
+    <div class="caption">Schematic, built to mirror the published behavior. In the paper the same procedure runs on real IRESes with the 650M-parameter model: for a length-<span class="mono">N</span> sequence it performs <span class="mono">3N+1</span> forward passes (the original plus every single-point substitution) and records the largest shift in <a href="#" class="term" data-tip="Log-odds shift: the model outputs a probability for each base at each position. The shift is log2(p/(1-p)) under the mutant minus the same under the wild type. Big shift = strong dependency.">log-odds</a>.</div>
+  </div>
+
+  <div class="wrap">
+    <p>Do this for every position and you get an <span class="mono">N&times;N</span> grid &mdash; the <span class="hl">dependency map</span>. Cell <span class="mono">(i, j)</span> is bright when mutating <span class="mono">i</span> swings the prediction at <span class="mono">j</span>. The diagonal is a position reacting to itself, so it's masked out. Everything interesting lives off the diagonal.</p>
+  </div>
+</section>
+
+<!-- ================= 04 ANTIDIAGONAL = STEM ================= -->
+<section class="chap" id="s4">
+  <div class="wrap">
+    <div class="kicker"><b>04</b> &nbsp;/&nbsp; the duality</div>
+    <h2>A stem is an antidiagonal</h2>
+    <p>Here's the visual key to everything that follows. In a stem, the first base pairs with the last, the second with the second-to-last, and so on. As one index climbs, its partner's index <span class="hl">descends</span>. Plotted on the map, that traces a short line running <span class="hl">across</span> the diagonal &mdash; an <span class="hl">antidiagonal</span>. Each antidiagonal stripe is one stem. Watch a stripe fold into a stem:</p>
+  </div>
+
+  <div class="fig full">
+    <div class="fig-head">
+      <div class="fig-title">Antidiagonal &rarr; arc</div>
+      <div class="fig-tag">animation</div>
+    </div>
+    <div class="twocol">
+      <div>
+        <div class="cv-label">dependency map &mdash; one boxed stripe</div>
+        <canvas id="adMap" class="cv" width="380" height="380"></canvas>
+      </div>
+      <div>
+        <div class="cv-label">the same stem, drawn as a molecule</div>
+        <div class="svgbox"><svg id="adArc" viewBox="0 0 420 380" width="100%"></svg></div>
+      </div>
+    </div>
+    <div class="controls" style="margin-top:16px"><button class="btn on" id="adPlay">&#9654;&nbsp; Replay the fold</button></div>
+    <div class="caption">The bright antidiagonal cells (top-left&nbsp;&harr;&nbsp;bottom-right of the boxed region) are exactly the pairs that close into the stem on the right. Parallel-to-diagonal would mean adjacent positions &mdash; which cannot pair. Perpendicular is the signal.</div>
+  </div>
+</section>
+
+<!-- ================= 05 NOISE VS SIGNAL ================= -->
+<section class="chap" id="s5">
+  <div class="wrap">
+    <div class="kicker"><b>05</b> &nbsp;/&nbsp; nobody supplied the answer</div>
+    <h2>Structure it was never given</h2>
+    <p>This is the part worth dwelling on. The base model, <span class="term" data-tip="RiNALMo: a 650M-parameter RNA language model pre-trained on 36 million non-coding RNA sequences. None were IRESes.">RiNALMo</span>, already knew general RNA &mdash; but run a dependency map on an IRES and you get <span class="hl">noise</span>. Fine-tune the very same architecture on ~50,000 IRES sequences (still just letters, still just masked-token guessing) and the antidiagonals snap into focus. The model that emerges is <span class="hl">Albatross</span>.</p>
+    <p>Nothing about pairing, geometry, or thermodynamics was ever added. Only more of the right sequences. Drag the slider to fine-tune.</p>
+  </div>
+
+  <div class="fig full">
+    <div class="fig-head">
+      <div class="fig-title">From noise to stems</div>
+      <div class="fig-tag">interactive &middot; EMCV-style map</div>
+    </div>
+    <canvas id="trainMap" class="cv" width="640" height="640" style="max-width:460px;margin:0 auto"></canvas>
+    <div class="slider-row" style="margin-top:18px">
+      <label>fine-tuning</label>
+      <input type="range" id="trainSlider" min="0" max="100" value="0">
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="k">stage</div><div class="v" id="trainStage" style="font-size:1.1rem">base model</div></div>
+      <div class="ro"><div class="k">micro&nbsp;F1 vs solved structures</div><div class="v" id="trainF1">0.05</div></div>
+    </div>
+    <div class="caption">Mirrors Figure&nbsp;3B&ndash;C and the training curves in 3G. Signal appears fast, then a subtlety the slider hints at: training too long, or on too many near-duplicate sequences, makes it <span class="hl">worse</span>. A smaller, diversity-balanced 50k set beat a 500k set &mdash; more data is not the lever; coverage is.</div>
+  </div>
+
+  <aside class="note bio" style="max-width:var(--measure);margin-left:auto;margin-right:auto">
+    <div class="tag">For AI readers &middot; why this is surprising biologically</div>
+    <p>Folding has historically meant physics (free-energy minimization) or evolution (covariation). Recovering pairs from a pure next-token-style objective implies the constraints of base-pairing are <b>statistically legible in raw sequence</b> &mdash; the model rediscovers chemistry it was never shown.</p>
+  </aside>
+</section>
+
+<!-- ================= 06 MAP TO STRUCTURE ================= -->
+<section class="chap" id="s6">
+  <div class="wrap">
+    <div class="kicker"><b>06</b> &nbsp;/&nbsp; from a heatmap to a structure</div>
+    <h2>Commit, but only when sure</h2>
+    <p>Turning the map into an actual list of pairs uses a filter with <span class="hl">no biology in it at all</span> &mdash; only geometry: ignore weak signal below a threshold, drop the un-pairable band next to the diagonal, keep only stripes long enough to be a real stem, then match each position to at most one partner. No base-pairing rules are enforced, which lets it propose non-canonical pairs.</p>
+    <p>The threshold is the dial that matters. Raise it and the model only commits to pairs it's sure of: <span class="hl">precision soars, recall falls</span>. That trade-off is the method's signature &mdash; and a thing to keep honest about. Move the slider:</p>
+  </div>
+
+  <div class="fig full">
+    <div class="fig-head">
+      <div class="fig-title">Precision &harr; recall</div>
+      <div class="fig-tag">interactive</div>
+    </div>
+    <div class="cv-label">predicted pairs (solid) vs real pairs the model passed on (dashed)</div>
+    <div class="svgbox"><svg id="prArc" viewBox="0 0 760 200" width="100%"></svg></div>
+    <div class="slider-row" style="margin-top:16px">
+      <label>confidence threshold &tau;</label>
+      <input type="range" id="prSlider" min="2" max="30" value="11">
+    </div>
+    <div class="readouts">
+      <div class="ro"><div class="k">precision</div><div class="v" id="prP">0.72 <small>"when it says a pair, it's right"</small></div></div>
+      <div class="ro"><div class="k">recall</div><div class="v" id="prR">0.41 <small>"of all real pairs, fraction found"</small></div></div>
+    </div>
+    <div class="legend">
+      <span><i style="background:var(--nA)"></i>predicted &amp; correct</span>
+      <span><i style="background:var(--signal)"></i>predicted, wrong</span>
+      <span><i style="background:var(--mist-dim)"></i>real pair, missed</span>
+    </div>
+    <div class="caption">Operating point from the paper: &tau;&nbsp;=&nbsp;0.11 gives median precision ~0.78 with recall ~0.41. High precision means the predictions you get are trustworthy scaffolds; low recall means it is deliberately <span class="hl">not</span> guessing at everything.</div>
+  </div>
+
+  <aside class="note bio" style="max-width:var(--measure);margin-left:auto;margin-right:auto">
+    <div class="tag">For AI readers &middot; reading the benchmark</div>
+    <p>The "truth" here is itself a model &mdash; secondary structures inferred from a chemical probe (<b>DMS-MaPseq</b>) that marks unpaired bases. In at least one case Albatross's scored "false positive" was actually correct and the chemical reference was wrong, so true precision is likely higher than reported.</p>
+  </aside>
+</section>
+
+<!-- ================= 07 SHOWDOWN ================= -->
+<section class="chap" id="s7">
+  <div class="wrap">
+    <div class="kicker"><b>07</b> &nbsp;/&nbsp; head to head</div>
+    <h2>Where covariation falls off a cliff</h2>
+    <p>Now the comparison that matters. Bin every IRES by how many similar relatives exist to align. When relatives are plentiful, covariation (here, <span class="mono">CaCoFold</span>) keeps up. When they vanish &mdash; the regime that actually stumps biologists &mdash; covariation collapses and Albatross holds. Pick a bin:</p>
+  </div>
+
+  <div class="fig full">
+    <div class="fig-head">
+      <div class="fig-title">Precision by number of close relatives</div>
+      <div class="fig-tag">interactive &middot; per-structure points</div>
+    </div>
+    <div class="controls">
+      <button class="btn on" data-bin="0">1&ndash;9 relatives</button>
+      <button class="btn" data-bin="1">10&ndash;99</button>
+      <button class="btn" data-bin="2">100+</button>
+    </div>
+    <div class="twocol">
+      <div><div class="cv-label" style="color:var(--signal)">Albatross</div><svg id="distA" viewBox="0 0 300 220" width="100%"></svg></div>
+      <div><div class="cv-label" style="color:var(--nA)">CaCoFold (covariation)</div><svg id="distC" viewBox="0 0 300 220" width="100%"></svg></div>
+    </div>
+    <div class="caption" id="showCap">In the 1&ndash;9 bin the gap is largest. The most extreme case &mdash; a Gallivirus IRES with just <span class="hl">four</span> related sequences &mdash; defeats covariation entirely, yet Albatross predicts its structure correctly. How?</div>
+  </div>
+</section>
+
+<!-- ================= 08 MOTIF MEMORY ================= -->
+<section class="chap" id="s8">
+  <div class="wrap">
+    <div class="kicker"><b>08</b> &nbsp;/&nbsp; the mechanism, not magic</div>
+    <h2>It isn't covariation &mdash; it's memory of motifs</h2>
+    <p>With four relatives there's no covariation to exploit, so Albatross must be doing something else. It has learned that certain little sequence words imply certain folds. A classic one is the <span class="term" data-tip="GNRA tetraloop: a four-nucleotide loop (G, any, purine, A) that folds into a very stable, recognizable shape capping a stem. One of RNA's most common motifs.">GNRA tetraloop</span> &mdash; see that word, expect the stem that follows it.</p>
+    <p>To prove it, break the word. Mutate the motif and the prediction degrades; delete it and the stem vanishes entirely. Try each:</p>
+  </div>
+
+  <div class="fig full">
+    <div class="fig-head">
+      <div class="fig-title">Break the motif, lose the stem</div>
+      <div class="fig-tag">interactive &middot; Gallivirus GNRA</div>
+    </div>
+    <div class="controls">
+      <button class="btn on" data-gnra="0">wild type <span class="mono">GUAA</span></button>
+      <button class="btn" data-gnra="1"><span class="mono">AAAA</span></button>
+      <button class="btn" data-gnra="2"><span class="mono">CCCC</span></button>
+      <button class="btn" data-gnra="3">deletion</button>
+    </div>
+    <div class="twocol">
+      <div><div class="cv-label">dependency map of the motif region</div><canvas id="gnraMap" class="cv" width="340" height="340"></canvas></div>
+      <div>
+        <div class="cv-label">signal-to-noise of the stem</div>
+        <svg id="gnraSNR" viewBox="0 0 320 200" width="100%"></svg>
+        <div class="mw-note" id="gnraMsg" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <div class="caption">Even a conservative two-letter change injects visible noise; scrambling to <span class="mono">CCCC</span> floods it; deleting the motif removes the stem outright. The map "knows" the stem because it recognizes the word &mdash; a capability covariation has no access to.</div>
+  </div>
+</section>
+
+<!-- ================= 09 SCALING ================= -->
+<section class="chap" id="s9">
+  <div class="wrap">
+    <div class="kicker"><b>09</b> &nbsp;/&nbsp; the trajectory</div>
+    <h2>Bigger model, broader rules</h2>
+    <p>One more result points the way forward. Fine-tune three sizes &mdash; <span class="mono">33M</span>, <span class="mono">150M</span>, <span class="mono">650M</span> parameters &mdash; on <span class="hl">Type&nbsp;I IRESes only</span>, then test on every type. Larger models find more structure, as expected. The striking part: they also get better on types they <span class="hl">never trained on</span>. The rules it learns generalize. Switch sizes:</p>
+  </div>
+
+  <div class="fig full">
+    <div class="fig-head">
+      <div class="fig-title">Predicted base pairs by IRES type</div>
+      <div class="fig-tag">interactive &middot; trained on Type I only</div>
+    </div>
+    <div class="controls">
+      <button class="btn" data-size="0">micro &middot; 33M</button>
+      <button class="btn" data-size="1">mega &middot; 150M</button>
+      <button class="btn on" data-size="2">giga &middot; 650M</button>
+    </div>
+    <div class="chart" id="scaleChart"></div>
+    <div class="legend"><span style="color:var(--mist-dim)">bars: Type I (trained) &middot; Types II, IV, V (held out)</span></div>
+    <div class="caption">Mirrors Figure&nbsp;5I. Held-out types are structurally divergent from Type&nbsp;I, so the gains can't be covariation leaking through &mdash; the model is learning transferable structural logic that scales with capacity.</div>
+  </div>
+</section>
+
+<!-- ================= 10 LIMITS ================= -->
+<section class="chap" id="s10">
+  <div class="wrap">
+    <div class="kicker"><b>10</b> &nbsp;/&nbsp; staying honest</div>
+    <h2>What it still can't do</h2>
+    <ul class="lims">
+      <li><span class="n">a</span><div><b>It misses a lot.</b> High precision is bought with low recall (~0.41). Many real, thermodynamically fine pairs are never proposed &mdash; it favors structure that selection appears to maintain.</div></li>
+      <li><span class="n">b</span><div><b>The ruler is bent.</b> Performance is scored against chemically inferred structures that are themselves imperfect. Some "errors" are the benchmark's, not the model's.</div></li>
+      <li><span class="n">c</span><div><b>Dependency is a proxy.</b> A strong reaction between two positions is strong evidence of pairing, not proof; other long-range constraints could in principle produce signal.</div></li>
+      <li><span class="n">d</span><div><b>Counting is a stand-in.</b> The scaling result counts predicted pairs, leaning on the empirically high precision rather than measuring quality directly at each size.</div></li>
+      <li><span class="n">e</span><div><b>It reads, it doesn't yet write.</b> This work recovers structure from existing sequences. Designing new sequences to produce a target structure is the natural next step &mdash; and a different problem.</div></li>
+    </ul>
+    <div class="pull">The map reads dependencies <span>out</span>. The obvious sequel is to write sequences that produce a chosen dependency pattern &mdash; inverse folding, supervised by the map itself.</div>
+  </div>
+</section>
+
+<!-- ================= FOOTER ================= -->
+<footer>
+  <div class="wrap">
+    <h3 style="margin-top:0">What to carry away</h3>
+    <p>A sequence-only model, perturbed one nucleotide at a time, exposes base pairs as antidiagonal stripes &mdash; <span class="hl">precise, alignment-free, and strongest exactly where covariation is weakest</span>, because it remembers motifs rather than needing relatives. It misses pairs, it's judged against an imperfect ruler, and it doesn't yet design. But it turns one of biology's least tractable structure problems into a forward pass.</p>
+    <h3>Go deeper</h3>
+    <div class="reflist">
+      &mdash; Sychla, Bongrand et&nbsp;al. (2026). <i>An RNA Language Model trained on sequence alone reveals the structural logic of IRESes.</i> bioRxiv.<br>
+      &mdash; Maps &amp; structures for ~75,000 IRESes: <a href="https://albatrossrna.org" target="_blank" rel="noopener">albatrossrna.org</a><br>
+      &mdash; da&nbsp;Silva et&nbsp;al. (2025). Nucleotide dependency analysis of genomic language models. <i>Nature Genetics.</i><br>
+      &mdash; Penic et&nbsp;al. (2025). RiNALMo. <i>Nature Communications.</i>
+    </div>
+    <p class="foot-note">Interactive panels are pedagogical reconstructions built to mirror the published figures' behavior; quantitative claims (activities, F1/precision, model sizes, signal-to-noise) are the paper's reported values.</p>
+  </div>
+</footer>
+
+<script>
+"use strict";
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/* ---------------- magma colormap ---------------- */
+const MAGMA = [[0,0,4],[24,15,62],[69,16,119],[114,31,129],[159,47,127],[205,64,113],[241,96,93],[253,149,103],[252,253,191]];
+function magma(t){
+  t=Math.max(0,Math.min(1,t)); const x=t*(MAGMA.length-1); const i=Math.floor(x); const f=x-i;
+  const a=MAGMA[i], b=MAGMA[Math.min(i+1,MAGMA.length-1)];
+  return `rgb(${Math.round(a[0]+(b[0]-a[0])*f)},${Math.round(a[1]+(b[1]-a[1])*f)},${Math.round(a[2]+(b[2]-a[2])*f)})`;
+}
+
+/* ---------------- progress + track ---------------- */
+const prog=document.getElementById('progress');
+addEventListener('scroll',()=>{const h=document.documentElement;const p=h.scrollTop/(h.scrollHeight-h.clientHeight);prog.style.width=(p*100)+'%';},{passive:true});
+document.querySelectorAll('.track button').forEach(b=>b.addEventListener('click',()=>{
+  document.body.dataset.track=b.dataset.track;
+  document.querySelectorAll('.track button').forEach(x=>x.setAttribute('aria-pressed', x===b));
+}));
+
+/* ---------------- tooltips ---------------- */
+const tip=document.getElementById('tip');
+function moveTip(e){const x=Math.min(e.clientX+14, innerWidth-300); tip.style.left=x+'px'; tip.style.top=(e.clientY+16)+'px';}
+document.querySelectorAll('[data-tip]').forEach(el=>{
+  el.addEventListener('mouseenter',e=>{tip.innerHTML=el.dataset.tip;tip.style.opacity=1;moveTip(e);});
+  el.addEventListener('mousemove',moveTip);
+  el.addEventListener('mouseleave',()=>tip.style.opacity=0);
+  if(el.tagName==='A') el.addEventListener('click',e=>e.preventDefault());
+});
+
+/* ---------------- hero canvas ---------------- */
+(function(){
+  const cv=document.getElementById('heroCanvas'); const ctx=cv.getContext('2d');
+  let W,H,cell,N; const t0=performance.now();
+  // a few stems for the ambient map
+  const stems=[[6,30,7],[14,52,5],[40,72,6],[58,90,5],[22,86,4]];
+  function resize(){W=cv.width=cv.clientWidth*devicePixelRatio;H=cv.height=cv.clientHeight*devicePixelRatio;N=Math.max(70,Math.floor(W/14));cell=Math.min(W,H)/N;}
+  resize(); addEventListener('resize',resize);
+  function val(i,j,time){
+    if(i===j) return 0.0;
+    let v=0.04+0.03*Math.sin((i*0.7+j*0.3+time*0.0007));
+    for(const [a,b,L] of stems){ for(let k=0;k<L;k++){ if(i===a+k && j===b-k){ v=0.85*(0.6+0.4*Math.sin(time*0.001+k)); } if(j===a+k && i===b-k){ v=0.85*(0.6+0.4*Math.sin(time*0.001+k)); } } }
+    return v;
+  }
+  function draw(time){
+    ctx.clearRect(0,0,W,H);
+    const off=(W-N*cell)/2, offY=(H-N*cell)/2;
+    for(let i=0;i<N;i++) for(let j=0;j<N;j++){
+      const v=val(i,j,time); if(v<0.05) continue;
+      ctx.fillStyle=magma(v); ctx.globalAlpha=v<0.2?0.5:1;
+      ctx.fillRect(off+i*cell,offY+j*cell,cell*0.92,cell*0.92);
+    }
+    ctx.globalAlpha=1;
+    if(!reduceMotion) requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+/* ---------------- 03 mutate & watch ---------------- */
+(function(){
+  const seq="GCGACUUCGGUCGC".split(""); // 14 nt
+  const pairs={0:13,1:12,2:11,3:10,4:9,9:4,10:3,11:2,12:1,13:0};
+  const N=seq.length;
+  const comp={A:'U',U:'A',G:'C',C:'G'};
+  const ntColor={A:'var(--nA)',C:'var(--nC)',G:'var(--nG)',U:'var(--nU)'};
+  let sel=null, mutBase=null;
+  const arc=document.getElementById('mwArc');
+  const bars=document.getElementById('mwBars');
+  const idx=document.getElementById('mwIdx');
+  const seqrow=document.getElementById('mwSeq');
+  const alts=document.getElementById('mwAlts');
+  const msg=document.getElementById('mwMsg');
+
+  // index labels + bars + seq
+  for(let i=0;i<N;i++){
+    const s=document.createElement('span');s.textContent=i+1;idx.appendChild(s);
+    const b=document.createElement('div');b.className='bar';b.innerHTML='<i></i>';bars.appendChild(b);
+    const c=document.createElement('div');c.className='base';c.style.color=ntColor[seq[i]];c.textContent=seq[i];c.dataset.i=i;
+    c.addEventListener('click',()=>select(i));
+    seqrow.appendChild(c);
+  }
+  const baseEls=[...seqrow.children];
+  const barEls=[...bars.children];
+
+  function dep(i,mut){ // returns array of reaction magnitudes
+    const out=new Array(N).fill(0);
+    const partner=pairs[i];
+    const broke = partner!=null ? (mut!==comp[seq[partner]]) : false;
+    for(let j=0;j<N;j++){
+      if(j===i){out[j]=0;continue;}
+      let v=0.03+0.05*Math.abs(Math.sin(i*1.3+j*0.9));
+      if(j===partner) v=broke?0.97:0.78;
+      // stacking neighbours within stem
+      if(partner!=null){ if(j===partner-1||j===partner+1){ if(pairs[j]!=null) v=Math.max(v,0.34); } }
+      out[j]=v;
+    }
+    return out;
+  }
+  function renderBars(arr,partner){
+    barEls.forEach((b,j)=>{
+      const i=b.querySelector('i'); i.style.height=(arr[j]*110)+'px';
+      b.className='bar'+(j===sel?' is-self':'')+(j===partner?' is-partner':'');
+    });
+  }
+  function clearBars(){ barEls.forEach(b=>{b.querySelector('i').style.height='1px';b.className='bar';}); }
+
+  function drawArc(){
+    arc.innerHTML='';
+    const ns='http://www.w3.org/2000/svg';
+    const x0=40,x1=420,y=150,r=12; const step=(x1-x0)/(N-1);
+    const px=i=>x0+i*step;
+    // pairing arcs
+    for(let i=0;i<N;i++){const p=pairs[i]; if(p!=null && p>i){
+      const a=px(i),b=px(p),mid=(a+b)/2, h=70+(p-i)*5;
+      const path=document.createElementNS(ns,'path');
+      path.setAttribute('d',`M ${a} ${y} Q ${mid} ${y-h} ${b} ${y}`);
+      path.setAttribute('fill','none');
+      const lit = sel!=null && (i===sel||p===sel);
+      path.setAttribute('stroke', lit?'var(--peak)':'var(--line)');
+      path.setAttribute('stroke-width', lit?3:1.5);
+      arc.appendChild(path);
+    }}
+    // nodes
+    for(let i=0;i<N;i++){
+      const g=document.createElementNS(ns,'g'); g.style.cursor='pointer';
+      const c=document.createElementNS(ns,'circle');
+      c.setAttribute('cx',px(i));c.setAttribute('cy',y);c.setAttribute('r',r);
+      const isSel=i===sel, isPart=sel!=null&&pairs[sel]===i;
+      c.setAttribute('fill', isSel?'var(--signal)':(isPart?'rgba(251,192,45,.18)':'var(--ink-2)'));
+      c.setAttribute('stroke', isPart?'var(--peak)':'var(--line)');
+      c.setAttribute('stroke-width', isPart?2.5:1.5);
+      const tx=document.createElementNS(ns,'text');
+      tx.setAttribute('x',px(i));tx.setAttribute('y',y+4);tx.setAttribute('text-anchor','middle');
+      tx.setAttribute('font-family','var(--mono)');tx.setAttribute('font-size','13');tx.setAttribute('font-weight','600');
+      tx.setAttribute('fill', isSel?'#1a0d08':(getCSS(ntColor[ (i===sel&&mutBase)?mutBase:seq[i] ])) );
+      tx.textContent=(i===sel&&mutBase)?mutBase:seq[i];
+      g.appendChild(c);g.appendChild(tx);
+      g.addEventListener('click',()=>select(i));
+      arc.appendChild(g);
+    }
+  }
+  function getCSS(v){const d=document.createElement('div');d.style.color=v;document.body.appendChild(d);const c=getComputedStyle(d).color;d.remove();return c;}
+
+  function select(i){
+    sel=i; mutBase=null;
+    baseEls.forEach((e,k)=>e.classList.toggle('sel',k===i));
+    baseEls.forEach((e,k)=>e.classList.toggle('partner',pairs[i]===k));
+    // alt buttons
+    alts.innerHTML='<span style="font-family:var(--mono);font-size:12px;color:var(--mist-dim);align-self:center;margin-right:4px">change '+seq[i]+' to:</span>';
+    ['A','C','G','U'].filter(b=>b!==seq[i]).forEach(b=>{
+      const btn=document.createElement('button');btn.className='btn';btn.textContent=b;btn.style.color=getCSS(ntColor[b]);
+      btn.addEventListener('click',()=>mutate(i,b));
+      alts.appendChild(btn);
+    });
+    const def = seq[i]==='A'?'U':seq[i]==='U'?'A':seq[i]==='G'?'C':'G';
+    mutate(i,def);
+  }
+  function mutate(i,b){
+    mutBase=b;
+    [...alts.querySelectorAll('.btn')].forEach(x=>x.classList.toggle('on',x.textContent===b));
+    const arr=dep(i,b); const p=pairs[i];
+    renderBars(arr,p); drawArc();
+    if(p!=null){
+      const broke=b!==comp[seq[p]];
+      msg.innerHTML=`Position <b>${i+1}</b> is <b>${seq[i]}</b>. Changing it to <b>${b}</b> ${broke?'breaks pairing and':'still'} most strongly shifts the model's guess at position <b>${p+1}</b> &mdash; its base-pairing partner. The loop barely reacts.`;
+    } else {
+      msg.innerHTML=`Position <b>${i+1}</b> sits in the loop &mdash; it has no partner, so no single other position reacts strongly. Try a base in the stem.`;
+    }
+  }
+  drawArc(); clearBars();
+})();
+
+/* ---------------- 04 antidiagonal -> arc ---------------- */
+(function(){
+  const cv=document.getElementById('adMap'),ctx=cv.getContext('2d');
+  const arc=document.getElementById('adArc'); const ns='http://www.w3.org/2000/svg';
+  const N=24, cell=cv.width/N;
+  const stemI=4, stemJ=19, L=6; // antidiagonal stem: (4,19),(5,18)...
+  function onStem(i,j){for(let k=0;k<L;k++){if((i===stemI+k&&j===stemJ-k)||(j===stemI+k&&i===stemJ-k))return k;}return -1;}
+  function drawMap(prog){
+    ctx.fillStyle='#000';ctx.fillRect(0,0,cv.width,cv.height);
+    for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+      let v=0; if(i===j)v=0; else{ v=0.04+0.04*Math.abs(Math.sin(i*1.7+j*1.1)); const k=onStem(i,j); if(k>=0 && k<=prog*L) v=0.9; }
+      if(v<0.05)continue; ctx.fillStyle=magma(v); ctx.fillRect(i*cell,j*cell,cell*0.9,cell*0.9);
+    }
+    // box around stem
+    ctx.strokeStyle='var(--peak)';ctx.strokeStyle='#FBC02D';ctx.lineWidth=2;
+    ctx.strokeRect((stemI-0.3)*cell,(stemJ-L+0.7)*cell,(L)*cell*0.95,(L)*cell*0.95);
+  }
+  function drawArc(prog){
+    arc.innerHTML='';
+    const x0=30,x1=390,y=300,step=(x1-x0)/(N-1),px=i=>x0+i*step;
+    // baseline
+    for(let k=0;k<L;k++){
+      const i=stemI+k, j=stemJ-k;
+      if(k> prog*L) continue;
+      const a=px(i),b=px(j),mid=(a+b)/2,h=120+(j-i)*3;
+      const path=document.createElementNS(ns,'path');
+      path.setAttribute('d',`M ${a} ${y} Q ${mid} ${y-h} ${b} ${y}`);
+      path.setAttribute('fill','none');path.setAttribute('stroke','#FBC02D');path.setAttribute('stroke-width','3');
+      arc.appendChild(path);
+    }
+    for(let i=0;i<N;i++){
+      const c=document.createElementNS(ns,'circle');c.setAttribute('cx',px(i));c.setAttribute('cy',y);c.setAttribute('r',5);
+      const k=onStem(i, i<12?stemJ-(i-stemI):stemI+(stemJ-i));
+      const inStem=(i>=stemI&&i<stemI+L)||(i<=stemJ&&i>stemJ-L);
+      c.setAttribute('fill', inStem?'#F2683C':'#312654');
+      arc.appendChild(c);
+    }
+  }
+  let raf;
+  function play(){
+    cancelAnimationFrame(raf); const t0=performance.now(); const dur=1600;
+    function step(now){const p=reduceMotion?1:Math.min(1,(now-t0)/dur);drawMap(p);drawArc(p);if(p<1)raf=requestAnimationFrame(step);}
+    raf=requestAnimationFrame(step);
+  }
+  document.getElementById('adPlay').addEventListener('click',play);
+  // initial static
+  drawMap(1);drawArc(1);
+  // replay on scroll into view once
+  const io=new IntersectionObserver((es)=>{es.forEach(e=>{if(e.isIntersecting){play();io.disconnect();}})},{threshold:.4});
+  io.observe(cv);
+})();
+
+/* ---------------- 05 train map ---------------- */
+(function(){
+  const cv=document.getElementById('trainMap'),ctx=cv.getContext('2d');
+  const N=60, cell=cv.width/N;
+  const stems=[[6,30,8],[12,55,6],[34,58,7],[40,52,4],[18,48,5]];
+  function onStem(i,j){for(const[a,b,L]of stems)for(let k=0;k<L;k++){if((i===a+k&&j===b-k)||(j===a+k&&i===b-k))return true;}return false;}
+  // deterministic pseudo-noise
+  function noise(i,j){return 0.5+0.5*Math.sin(i*12.9898+j*78.233);}
+  function draw(p){ // p 0..1
+    ctx.fillStyle='#000';ctx.fillRect(0,0,cv.width,cv.height);
+    for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+      if(i===j)continue;
+      let base=0.05+0.22*noise(i,j)*(1-p*0.65); // noise fades a bit
+      let sig=onStem(i,j)? p*0.95 : 0;
+      const v=Math.max(base*((Math.abs(i-j)<3)?0.3:1), sig);
+      if(v<0.06)continue; ctx.fillStyle=magma(v); ctx.fillRect(i*cell,j*cell,cell*0.92,cell*0.92);
+    }
+  }
+  const slider=document.getElementById('trainSlider');
+  const stage=document.getElementById('trainStage'), f1=document.getElementById('trainF1');
+  function update(){
+    const p=slider.value/100; draw(p);
+    let st='base model', score=0.05;
+    if(p>0.02&&p<0.45){st='fine-tuning &mdash; signal emerging';score=0.05+p*1.0;}
+    else if(p>=0.45&&p<0.8){st='peak (50k, diversity-balanced)';score=0.52;}
+    else if(p>=0.8){st='over-trained &mdash; drifting down';score=0.52-(p-0.8)*0.35;}
+    stage.innerHTML=st; f1.textContent=score.toFixed(2);
+  }
+  slider.addEventListener('input',update); update();
+})();
+
+/* ---------------- 06 precision/recall arc ---------------- */
+(function(){
+  const arc=document.getElementById('prArc'); const ns='http://www.w3.org/2000/svg';
+  const N=40; const y=150,x0=20,x1=740,step=(x1-x0)/(N-1),px=i=>x0+i*step;
+  // real pairs (truth) with a "confidence" each
+  const truth=[];
+  const stems=[[2,14,5],[16,34,7],[20,30,4]];
+  stems.forEach(([a,b,L])=>{for(let k=0;k<L;k++)truth.push({i:a+k,j:b-k,conf:0.55+0.4*Math.random()});});
+  // some decoys the model might wrongly call at low threshold
+  const decoys=[{i:6,j:24,conf:0.18},{i:9,j:38,conf:0.12},{i:3,j:27,conf:0.22}];
+  const pP=document.getElementById('prP'),pR=document.getElementById('prR');
+  function draw(tau){
+    arc.innerHTML='';
+    let tp=0,fn=0,fp=0;
+    function drawArcPair(i,j,color,dash,w){
+      const a=px(i),b=px(j),mid=(a+b)/2,h=18+(j-i)*2.6;
+      const p=document.createElementNS(ns,'path');
+      p.setAttribute('d',`M ${a} ${y} Q ${mid} ${y-h} ${b} ${y}`);
+      p.setAttribute('fill','none');p.setAttribute('stroke',color);p.setAttribute('stroke-width',w);
+      if(dash)p.setAttribute('stroke-dasharray','4 4');
+      arc.appendChild(p);
+    }
+    truth.forEach(t=>{ if(t.conf>=tau){drawArcPair(t.i,t.j,'var(--nA)',false,2.4);tp++;} else {drawArcPair(t.i,t.j,'var(--mist-dim)',true,1.4);fn++;} });
+    decoys.forEach(d=>{ if(d.conf>=tau){drawArcPair(d.i,d.j,'var(--signal)',false,2);fp++;} });
+    // baseline + nodes
+    const line=document.createElementNS(ns,'line');line.setAttribute('x1',x0);line.setAttribute('y1',y);line.setAttribute('x2',x1);line.setAttribute('y2',y);line.setAttribute('stroke','var(--line)');line.setAttribute('stroke-width','2');arc.appendChild(line);
+    for(let i=0;i<N;i++){const c=document.createElementNS(ns,'circle');c.setAttribute('cx',px(i));c.setAttribute('cy',y);c.setAttribute('r',3);c.setAttribute('fill','#312654');arc.appendChild(c);}
+    const prec= tp+fp>0? tp/(tp+fp):1;
+    const rec= tp+fn>0? tp/(tp+fn):0;
+    pP.innerHTML=prec.toFixed(2)+' <small>"when it says a pair, it\'s right"</small>';
+    pR.innerHTML=rec.toFixed(2)+' <small>"of all real pairs, fraction found"</small>';
+  }
+  const sl=document.getElementById('prSlider');
+  sl.addEventListener('input',()=>draw(sl.value/100));
+  draw(0.11);
+})();
+
+/* ---------------- 07 showdown distributions ---------------- */
+(function(){
+  // medians/spreads per bin: [albatross, cacofold]
+  const data={
+    0:{a:[0.35,0.85,0.62,0.78,0.55,0.7,0.48,0.66,0.6,0.4,0.72,0.58,0.5,0.68], c:[0.05,0.0,0.2,0.0,0.15,0.0,0.1,0.0,0.25,0.0,0.12,0.0,0.18,0.0], note:'1&ndash;9 relatives: covariation has almost nothing to align. Gallivirus (4 relatives) lives here.'},
+    1:{a:[0.8,0.92,0.85,0.78,0.88,0.9,0.82,0.86,0.79,0.91,0.84,0.87], c:[0.78,0.85,0.9,0.72,0.88,0.8,0.83,0.86,0.75,0.9,0.81,0.84], note:'10&ndash;99 relatives: enough signal for covariation; the methods are comparable.'},
+    2:{a:[0.6,0.72,0.65,0.7,0.62,0.68], c:[0.45,0.55,0.5,0.52,0.48,0.5], note:'100+ relatives: covariation is solid, yet Albatross still edges ahead on precision.'}
+  };
+  function strip(svg,vals,color,markFirst){
+    svg.innerHTML='';const ns='http://www.w3.org/2000/svg';
+    const W=300,H=220,pad=30;
+    // axis
+    for(let g=0;g<=1.0001;g+=0.5){const yy=H-pad-(H-2*pad)*g;
+      const l=document.createElementNS(ns,'line');l.setAttribute('x1',pad);l.setAttribute('x2',W-10);l.setAttribute('y1',yy);l.setAttribute('y2',yy);l.setAttribute('stroke','#312654');l.setAttribute('stroke-width','1');svg.appendChild(l);
+      const t=document.createElementNS(ns,'text');t.setAttribute('x',6);t.setAttribute('y',yy+4);t.setAttribute('fill','#7E76A0');t.setAttribute('font-size','10');t.setAttribute('font-family','var(--mono)');t.textContent=g.toFixed(1);svg.appendChild(t);}
+    // median line
+    const med=[...vals].sort((a,b)=>a-b)[Math.floor(vals.length/2)];
+    const my=H-pad-(H-2*pad)*med;
+    const ml=document.createElementNS(ns,'line');ml.setAttribute('x1',pad);ml.setAttribute('x2',W-10);ml.setAttribute('y1',my);ml.setAttribute('y2',my);ml.setAttribute('stroke',color);ml.setAttribute('stroke-width','1.5');ml.setAttribute('stroke-dasharray','5 4');ml.setAttribute('opacity','.6');svg.appendChild(ml);
+    vals.forEach((v,k)=>{
+      const cx=pad+20+ (k%6)*( (W-pad-30)/6 ) + (Math.random()*8-4);
+      const cy=H-pad-(H-2*pad)*v;
+      const c=document.createElementNS(ns,'circle');c.setAttribute('cx',cx);c.setAttribute('cy',cy);c.setAttribute('r', (markFirst&&k===0)?6:5);
+      c.setAttribute('fill',color);c.setAttribute('opacity',.85);
+      if(markFirst&&k===0){c.setAttribute('stroke','#FBC02D');c.setAttribute('stroke-width','2.5');}
+      svg.appendChild(c);
+    });
+  }
+  const svgA=document.getElementById('distA'),svgC=document.getElementById('distC'),cap=document.getElementById('showCap');
+  function render(bin){
+    const d=data[bin];
+    strip(svgA,d.a,'#F2683C', bin===0);
+    strip(svgC,d.c,'#3FB9B0', false);
+    cap.innerHTML=d.note + (bin===0?' The gold-circled point is that Gallivirus IRES &mdash; Albatross gets it; covariation gets nothing.':'');
+  }
+  document.querySelectorAll('[data-bin]').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-bin]').forEach(x=>x.classList.toggle('on',x===b));
+    render(+b.dataset.bin);
+  }));
+  render(0);
+})();
+
+/* ---------------- 08 GNRA knockout ---------------- */
+(function(){
+  const cv=document.getElementById('gnraMap'),ctx=cv.getContext('2d');
+  const snr=document.getElementById('gnraSNR'),msg=document.getElementById('gnraMsg');
+  const N=30,cell=cv.width/N;
+  const stem=[[5,24,6]]; // the elbow stem
+  function onStem(i,j){for(const[a,b,L]of stem)for(let k=0;k<L;k++){if((i===a+k&&j===b-k)||(j===a+k&&i===b-k))return true;}return false;}
+  function nz(i,j){return 0.5+0.5*Math.sin(i*4.1+j*7.7);}
+  // states: snr value, noise level, stem visible, message
+  const states=[
+    {snr:17,noise:0.10,stem:1,msg:'<b>Wild type GUAA.</b> Clean antidiagonal &mdash; the stem is sharp and unambiguous.'},
+    {snr:13,noise:0.30,stem:1,msg:'<b>GUAA &rarr; AAAA.</b> A conservative change, yet noise creeps into the stem. The filter can still recover it &mdash; barely.'},
+    {snr:9, noise:0.55,stem:1,msg:'<b>Scrambled to CCCC.</b> Noise floods the region and spills into the neighbouring stem. The motif word is gone.'},
+    {snr:5, noise:0.65,stem:0,msg:'<b>Motif deleted.</b> Without the word, the stem disappears entirely &mdash; proof the prediction depended on recognizing it.'}
+  ];
+  function draw(s){
+    ctx.fillStyle='#000';ctx.fillRect(0,0,cv.width,cv.height);
+    for(let i=0;i<N;i++)for(let j=0;j<N;j++){
+      if(i===j)continue;
+      let v=0.05+s.noise*0.4*nz(i,j)*((Math.abs(i-j)<3)?0.4:1);
+      if(s.stem && onStem(i,j)) v=Math.max(v,0.92);
+      if(v<0.07)continue;ctx.fillStyle=magma(v);ctx.fillRect(i*cell,j*cell,cell*0.92,cell*0.92);
+    }
+  }
+  function drawSNR(active){
+    snr.innerHTML='';const ns='http://www.w3.org/2000/svg';const W=320,H=200,pad=28;const max=18;
+    const labels=['GUAA','AAAA','CCCC','del'];const bw=44,gap=24;
+    states.forEach((s,k)=>{
+      const x=pad+10+k*(bw+gap);const h=(s.snr/max)*(H-2*pad);const yy=H-pad-h;
+      const r=document.createElementNS(ns,'rect');r.setAttribute('x',x);r.setAttribute('y',yy);r.setAttribute('width',bw);r.setAttribute('height',h);r.setAttribute('rx',4);
+      r.setAttribute('fill', k===active?'#F2683C':'#312654');snr.appendChild(r);
+      const t=document.createElementNS(ns,'text');t.setAttribute('x',x+bw/2);t.setAttribute('y',H-pad+16);t.setAttribute('text-anchor','middle');t.setAttribute('fill','#7E76A0');t.setAttribute('font-size','11');t.setAttribute('font-family','var(--mono)');t.textContent=labels[k];snr.appendChild(t);
+      const vt=document.createElementNS(ns,'text');vt.setAttribute('x',x+bw/2);vt.setAttribute('y',yy-6);vt.setAttribute('text-anchor','middle');vt.setAttribute('fill',k===active?'#FBC02D':'#7E76A0');vt.setAttribute('font-size','12');vt.setAttribute('font-family','var(--mono)');vt.textContent=s.snr;snr.appendChild(vt);
+    });
+  }
+  function set(k){const s=states[k];draw(s);drawSNR(k);msg.innerHTML=s.msg;}
+  document.querySelectorAll('[data-gnra]').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-gnra]').forEach(x=>x.classList.toggle('on',x===b));
+    set(+b.dataset.gnra);
+  }));
+  set(0);
+})();
+
+/* ---------------- 09 scaling chart ---------------- */
+(function(){
+  // predicted base pairs per type, by size (log-ish display). [TypeI, II, IV, V]
+  const sizes=[
+    {lab:'micro 33M', v:[30,2,1,2]},
+    {lab:'mega 150M', v:[40,38,2,4]},
+    {lab:'giga 650M', v:[50,41,4,7]}
+  ];
+  const types=['I','II','IV','V'];
+  const colors=['#3FB9B0','#EC6A88','#9D7CD8','#FBC02D'];
+  const chart=document.getElementById('scaleChart');
+  const maxV=55;
+  function render(si){
+    chart.innerHTML='';
+    types.forEach((tp,k)=>{
+      const g=document.createElement('div');g.className='grp';
+      const bars=document.createElement('div');bars.className='bars';
+      const v=sizes[si].v[k];
+      const bar=document.createElement('i');bar.style.background=colors[k];bar.style.height=((v/maxV)*180)+'px';
+      bars.appendChild(bar);
+      const lab=document.createElement('div');lab.className='lab';lab.innerHTML='Type '+tp+'<br><span style="color:#F2EEFF">'+v+'</span>'+(k>0?'<br><span style="color:#7E76A0;font-size:9px">held out</span>':'<br><span style="color:#7E76A0;font-size:9px">trained</span>');
+      g.appendChild(bars);g.appendChild(lab);chart.appendChild(g);
+    });
+  }
+  document.querySelectorAll('[data-size]').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-size]').forEach(x=>x.classList.toggle('on',x===b));
+    render(+b.dataset.size);
+  }));
+  render(2);
+})();
+</script>
+</body>
+</html>

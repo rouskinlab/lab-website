@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Research — Rouskin Lab</title>
+    <meta name="description" content="Research areas of the Rouskin Lab: in-cell RNA structure probing with DMS-MaPseq, RNA language models, viral RNA regulation, alternative structures, and RNA in splicing and disease." />
+    <link rel="icon" href="assets/favicon.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Rouskin Lab — Home">
+        <img src="assets/rouskin-logo-yellow.webp" alt="Rouskin Lab" />
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="research.html" aria-current="page">Research</a>
+        <a href="publications.html">Publications</a>
+        <a href="explainers.html">Explainers</a>
+        <a href="people.html">People</a>
+        <a href="news.html">News</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="page-hero">
+        <div class="page-hero-grid">
+          <div>
+            <p class="kicker">Research</p>
+            <h1>RNA structure as a <em>measured, modeled</em> regulator of biology.</h1>
+            <p class="lede">
+              The lab works on the experimental and computational tools needed to
+              read RNA folding inside living cells — and on the biological
+              systems where structure changes outcome: viral genomes, human
+              transcripts, splicing, and disease.
+            </p>
+          </div>
+          <figure class="page-hero-visual contain">
+            <img src="assets/research-banner.webp" alt="Rouskin Lab research overview showing folded and unfolded RNA states" />
+          </figure>
+        </div>
+      </section>
+
+      <section class="page-section" id="areas">
+        <nav class="research-index" aria-label="Research areas">
+          <a href="#computation">
+            <span class="index-num">01 · Computation</span>
+            <h3>RNA language models &amp; structure</h3>
+            <span class="arrow">↓</span>
+          </a>
+          <a href="#probing">
+            <span class="index-num">02 · Measurement</span>
+            <h3>In-cell RNA probing with DMS-MaPseq</h3>
+            <span class="arrow">↓</span>
+          </a>
+          <a href="#alternative-structures">
+            <span class="index-num">03 · Ensembles</span>
+            <h3>Alternative RNA structures</h3>
+            <span class="arrow">↓</span>
+          </a>
+          <a href="#viral-rna">
+            <span class="index-num">04 · Viral RNA</span>
+            <h3>Structure as a regulatory program</h3>
+            <span class="arrow">↓</span>
+          </a>
+          <a href="#splicing">
+            <span class="index-num">05 · Human biology</span>
+            <h3>RNA at splice sites &amp; in disease</h3>
+            <span class="arrow">↓</span>
+          </a>
+        </nav>
+
+        <article class="research-area" id="computation">
+          <div class="research-area-text">
+            <span class="area-num">01 — Computation</span>
+            <h2>RNA language: <em>how sequence models expose RNA structure.</em></h2>
+            <p>
+              Sequence-trained RNA language models can learn statistical
+              dependencies between distant nucleotides. We interrogate those
+              dependencies with mutation scans, contact maps, and model
+              uncertainty to ask where sequence alone recovers structural
+              constraints.
+            </p>
+            <p>
+              We then compare model-derived couplings with in-cell probing data:
+              which signals look like base-pairing or functional motifs, which
+              are artifacts of sequence statistics, and where living cells fold
+              differently from what a model expects.
+            </p>
+            <div class="research-area-links">
+              <a class="link" href="explainers.html#albatross">RNA language explainer</a>
+              <a class="link-quiet" href="publications.html#year-2024">Recent papers</a>
+            </div>
+          </div>
+          <figure class="research-area-visual contain">
+            <img src="assets/computational-rna-model.svg" alt="RNA language model diagram showing sequence tokens, dependency arcs, a contact map, and probing validation signals." />
+          </figure>
+        </article>
+
+        <article class="research-area" id="probing">
+          <div class="research-area-text">
+            <span class="area-num">02 — Measurement</span>
+            <h2>In-cell RNA structure probing with <em>DMS-MaPseq</em>.</h2>
+            <p>
+              Dimethyl sulfate (DMS) chemically modifies the Watson-Crick face
+              of unpaired adenine and cytosine. Reverse transcription reads
+              modifications as mutations, and deep sequencing turns chemistry
+              into quantitative, nucleotide-resolution accessibility data —
+              for full transcripts inside living cells.
+            </p>
+            <p>
+              On top of this measurement, structural ensembles can be inferred
+              under statistical and biophysical constraints. We continue to
+              extend the method to longer RNAs, lower abundance targets, and
+              long-range interactions.
+            </p>
+            <div class="research-area-links">
+              <a class="link" href="explainers.html#dms-mapseq">DMS-MaPseq explainer</a>
+              <a class="link-quiet" href="https://www.nature.com/articles/nmeth.4057">Nature Methods (2017)</a>
+            </div>
+          </div>
+          <figure class="research-area-visual contain">
+            <img src="assets/dms-current.webp" alt="DMS chemical probing of A and C bases in folded RNA." />
+          </figure>
+        </article>
+
+        <article class="research-area" id="alternative-structures">
+          <div class="research-area-text">
+            <span class="area-num">03 — RNA ensembles</span>
+            <h2><em>One sequence</em>, multiple structures.</h2>
+            <p>
+              A single RNA can fold into more than one stable structure, and the
+              relative populations of those states can change with the cell's
+              state, the presence of binding partners, or the activity of
+              co-transcriptional folding. We study when alternative
+              conformations coexist, how they are stabilized in cells, and
+              when they matter biologically.
+            </p>
+            <div class="research-area-links">
+              <a class="link" href="https://www.nature.com/articles/s41586-020-2253-5">HIV Nature paper</a>
+              <a class="link-quiet" href="publications.html#year-2020">Related publications</a>
+            </div>
+          </div>
+          <figure class="research-area-visual contain">
+            <img src="assets/alternative-rna-structures.webp" alt="Two alternative RNA conformations of the same sequence." />
+          </figure>
+        </article>
+
+        <article class="research-area" id="viral-rna">
+          <div class="research-area-text">
+            <span class="area-num">04 — Viral RNA</span>
+            <h2>RNA structure as a <em>regulatory program</em> in viral genomes.</h2>
+            <p>
+              RNA viruses encode small numbers of genes but rely on extensive
+              RNA structure to control replication, splicing, translation, and
+              host interactions. We map structured elements in HIV-1 and
+              SARS-CoV-2 genomes in their host context — including long-range
+              base pairings that span thousands of nucleotides.
+            </p>
+            <div class="research-area-links">
+              <a class="link" href="https://www.nature.com/articles/s41467-022-28603-2">SARS-CoV-2 paper</a>
+              <a class="link-quiet" href="news.html#whitehead-hiv">HIV media coverage</a>
+            </div>
+          </div>
+          <figure class="research-area-visual contain viral-rna-visual">
+            <img src="assets/research-hiv.webp" alt="HIV-1 RNA structure diagram." />
+          </figure>
+        </article>
+
+        <article class="research-area" id="splicing">
+          <div class="research-area-text">
+            <span class="area-num">05 — Human biology</span>
+            <h2>RNA structure at <em>splice sites</em> and in disease.</h2>
+            <p>
+              Alternative splicing expands proteomic diversity and contributes
+              to many human diseases. We study co-transcriptional RNA folding
+              around splice sites in vivo, develop quantitative models for
+              RNA folding and RNA–protein interactions, and apply these tools
+              to disease-relevant targets including telomerase and mitochondrial
+              transcripts.
+            </p>
+            <div class="research-area-links">
+              <a class="link" href="https://www.nature.com/articles/s41594-023-01035-2#citeas">Splicing order paper</a>
+              <a class="link-quiet" href="https://www.science.org/doi/10.1126/science.adm9238">Mitochondrial structurome</a>
+            </div>
+          </div>
+          <figure class="research-area-visual">
+            <img src="assets/research-splicing.webp" alt="Alternative splicing and RNA structure visual." />
+          </figure>
+        </article>
+      </section>
+
+      <aside class="join" aria-labelledby="join-title">
+        <div>
+          <p class="kicker">Join the lab</p>
+          <h2 id="join-title">If any of these threads pulls on you, we'd like to <em>hear from you.</em></h2>
+          <p>We work with students and postdocs from RNA biology, biochemistry, virology, statistics, machine learning, and computational biology.</p>
+        </div>
+        <a class="link" href="contact.html">Contact</a>
+      </aside>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">The Rouskin Lab<small>Harvard Medical School · Department of Microbiology</small></div>
+          <address>77 Avenue Louis Pasteur<br />NRB 930 · Boston, MA 02115<br /><a href="mailto:silvi_rouskin@hms.harvard.edu">silvi_rouskin@hms.harvard.edu</a></address>
+        </div>
+        <div class="footer-col"><h4>Lab</h4><ul><li><a href="research.html">Research</a></li><li><a href="publications.html">Publications</a></li><li><a href="explainers.html">Explainers</a></li><li><a href="people.html">People</a></li></ul></div>
+        <div class="footer-col"><h4>More</h4><ul><li><a href="news.html">News &amp; media</a></li><li><a href="contact.html">Contact</a></li><li><a href="https://micro.hms.harvard.edu">HMS Microbiology</a></li><li><a href="https://twitter.com/RouskinLab">@RouskinLab</a></li></ul></div>
+      </div>
+      <div class="footer-meta"><span>© Rouskin Lab</span><span>Site built with restraint, in service of the science.</span></div>
+    </footer>
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) {
+          document.querySelectorAll(".research-area").forEach((e) => e.classList.add("is-visible"));
+          return;
+        }
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) { e.target.classList.add("is-visible"); io.unobserve(e.target); }
+          });
+        }, { threshold: 0.12, rootMargin: "0px 0px -60px 0px" });
+        document.querySelectorAll(".research-area").forEach((el) => io.observe(el));
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Explainers — Rouskin Lab</title>
+    <meta name="description" content="Technical stories from the Rouskin Lab — Distill-style explainers of selected methods, models, and findings." />
+    <link rel="icon" href="assets/favicon.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Rouskin Lab — Home">
+        <img src="assets/rouskin-logo-yellow.webp" alt="Rouskin Lab" />
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="research.html">Research</a>
+        <a href="publications.html">Publications</a>
+        <a href="explainers.html" aria-current="page">Explainers</a>
+        <a href="people.html">People</a>
+        <a href="news.html">News</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="page-hero">
+        <div class="page-hero-grid">
+          <div>
+            <p class="kicker">Explainers</p>
+            <h1>Technical stories <em>behind selected</em> methods and models.</h1>
+            <p class="lede">
+              These pieces sit next to the primary literature rather than
+              replacing it. They are written for readers who want the
+              measurement, the math, and the biology in one place — without
+              dumbing any of it down. Inspired by Distill and Thinking
+              Machines writing.
+            </p>
+          </div>
+          <figure class="page-hero-visual contain">
+            <img src="assets/rt-moving.webp" alt="Reverse transcription and RNA structure probing visual" />
+          </figure>
+        </div>
+      </section>
+
+      <section class="page-section">
+        <div class="explainer-grid">
+          <a class="explainer-card" id="dms-mapseq" href="articles/dms-mapseq/">
+            <p class="kicker">Method explainer</p>
+            <h2>DMS-MaPseq: reading RNA accessibility as mutations</h2>
+            <p>
+              How chemical probing, reverse transcription, and sequencing
+              combine to produce RNA accessibility signal — both in vitro and
+              inside living cells — and what the data does and does not tell
+              us about structure.
+            </p>
+            <span class="link-quiet">Open explainer</span>
+          </a>
+
+          <a class="explainer-card" id="albatross" href="articles/albatross/">
+            <p class="kicker">Model explainer</p>
+            <h2>RNA language: how an RNA language model exposes structure from sequence</h2>
+            <p>
+              A technical story about mutation scans, dependency maps,
+              IRES structure, and how sequence-trained models can be
+              interrogated against RNA structural biology rather than just
+              benchmarked on it.
+            </p>
+            <span class="link-quiet">Open explainer</span>
+          </a>
+        </div>
+
+        <p class="explainer-note">
+          More explainers are in preparation. If there is a method or paper from
+          the lab you would like to see written up here, please <a class="link-quiet inline-link" href="contact.html">get in touch</a>.
+        </p>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">The Rouskin Lab<small>Harvard Medical School · Department of Microbiology</small></div>
+          <address>77 Avenue Louis Pasteur<br />NRB 930 · Boston, MA 02115<br /><a href="mailto:silvi_rouskin@hms.harvard.edu">silvi_rouskin@hms.harvard.edu</a></address>
+        </div>
+        <div class="footer-col"><h4>Lab</h4><ul><li><a href="research.html">Research</a></li><li><a href="publications.html">Publications</a></li><li><a href="explainers.html">Explainers</a></li><li><a href="people.html">People</a></li></ul></div>
+        <div class="footer-col"><h4>More</h4><ul><li><a href="news.html">News &amp; media</a></li><li><a href="contact.html">Contact</a></li><li><a href="https://micro.hms.harvard.edu">HMS Microbiology</a></li><li><a href="https://twitter.com/RouskinLab">@RouskinLab</a></li></ul></div>
+      </div>
+      <div class="footer-meta"><span>© Rouskin Lab</span><span>Site built with restraint, in service of the science.</span></div>
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" role="img" aria-labelledby="title desc">
+  <title id="title">RNA language model structure diagram</title>
+  <desc id="desc">A premium scientific diagram showing RNA sequence tokens passing through language-model layers, attention arcs, a dependency map, and DMS probing signal.</desc>
+  <defs>
+    <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fbfaf7"/>
+      <stop offset="1" stop-color="#f0eadf"/>
+    </linearGradient>
+    <linearGradient id="amber-teal" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#c4901a"/>
+      <stop offset=".48" stop-color="#3e6e69"/>
+      <stop offset="1" stop-color="#284a72"/>
+    </linearGradient>
+    <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="7"/>
+    </filter>
+    <style>
+      .mono{font-family:"JetBrains Mono",SFMono-Regular,Menlo,Consolas,monospace}
+      .serif{font-family:Fraunces,Georgia,serif}
+      .label{font-size:14px;letter-spacing:.16em;text-transform:uppercase;fill:#8a6411;font-weight:600}
+      .small{font-size:13px;fill:#776f68}
+      .token{font-size:24px;fill:#17130f;font-weight:600}
+      .hair{stroke:#d9d1c4;stroke-width:1}
+    </style>
+  </defs>
+
+  <rect width="900" height="560" fill="url(#paper)"/>
+  <circle cx="300" cy="230" r="210" fill="#fff6dd" opacity=".42" filter="url(#soft)"/>
+  <circle cx="675" cy="300" r="150" fill="#dbe9e5" opacity=".33" filter="url(#soft)"/>
+
+  <g class="mono label">
+    <text x="64" y="66">sequence</text>
+    <text x="322" y="66">RNA language model</text>
+    <text x="646" y="66">structure signal</text>
+  </g>
+
+  <!-- Input tokens -->
+  <g transform="translate(58 98)">
+    <rect x="0" y="0" width="198" height="254" rx="0" fill="#fbfaf7" stroke="#e2dbce"/>
+    <g class="hair">
+      <path d="M28 54H170"/>
+      <path d="M28 104H170"/>
+      <path d="M28 154H170"/>
+      <path d="M28 204H170"/>
+    </g>
+    <g class="mono token">
+      <text x="28" y="42">A</text><text x="76" y="42">C</text><text x="124" y="42">G</text>
+      <text x="28" y="92">U</text><text x="76" y="92">A</text><text x="124" y="92">G</text>
+      <text x="28" y="142">C</text><text x="76" y="142">U</text><text x="124" y="142">C</text>
+      <text x="28" y="192">A</text><text x="76" y="192">G</text><text x="124" y="192">U</text>
+    </g>
+    <g opacity=".95">
+      <circle cx="39" cy="72" r="4" fill="#a51c30"/>
+      <circle cx="86" cy="172" r="4" fill="#a51c30" opacity=".72"/>
+      <circle cx="135" cy="222" r="4" fill="#a51c30" opacity=".55"/>
+      <path d="M40 228C76 232 116 232 152 228" fill="none" stroke="#26334f" stroke-width="2" stroke-linecap="round"/>
+    </g>
+    <text class="mono small" x="28" y="236">DMS marks exposed A/C</text>
+  </g>
+
+  <!-- Model layers -->
+  <g transform="translate(324 101)">
+    <rect x="0" y="0" width="234" height="248" fill="#fbfaf7" stroke="#e2dbce"/>
+    <g opacity=".9">
+      <rect x="32" y="34" width="170" height="32" fill="#f5efe4" stroke="#d8d0c2"/>
+      <rect x="32" y="90" width="170" height="32" fill="#f5efe4" stroke="#d8d0c2"/>
+      <rect x="32" y="146" width="170" height="32" fill="#f5efe4" stroke="#d8d0c2"/>
+      <text class="mono small" x="55" y="55">attention layer</text>
+      <text class="mono small" x="58" y="111">latent folding</text>
+      <text class="mono small" x="61" y="167">contact logits</text>
+    </g>
+    <g fill="none" stroke-linecap="round">
+      <path d="M28 217C75 118 151 118 206 217" stroke="#284a72" stroke-width="5" opacity=".82"/>
+      <path d="M44 217C82 165 132 165 170 217" stroke="#3e6e69" stroke-width="4" opacity=".82"/>
+      <path d="M84 217C108 191 132 191 156 217" stroke="#c4901a" stroke-width="4" opacity=".95"/>
+      <path d="M24 218H210" stroke="#26334f" stroke-width="1.5" opacity=".65"/>
+    </g>
+    <g class="mono token" font-size="20">
+      <text x="20" y="238">A</text><text x="51" y="238">C</text><text x="82" y="238">G</text><text x="113" y="238">U</text>
+      <text x="144" y="238">A</text><text x="175" y="238">C</text><text x="206" y="238">G</text>
+    </g>
+  </g>
+
+  <!-- Dependency/contact map -->
+  <g transform="translate(644 101)">
+    <rect x="0" y="0" width="196" height="248" fill="#fbfaf7" stroke="#e2dbce"/>
+    <g transform="translate(27 33)">
+      <rect x="0" y="0" width="142" height="142" fill="#f7f3eb" stroke="#ded7ca"/>
+      <g stroke="#ded7ca" stroke-width=".8">
+        <path d="M20 0V142M40 0V142M60 0V142M80 0V142M100 0V142M120 0V142"/>
+        <path d="M0 20H142M0 40H142M0 60H142M0 80H142M0 100H142M0 120H142"/>
+      </g>
+      <g fill="#284a72" opacity=".88">
+        <rect x="18" y="98" width="10" height="10"/>
+        <rect x="38" y="78" width="10" height="10"/>
+        <rect x="58" y="58" width="10" height="10"/>
+        <rect x="78" y="38" width="10" height="10"/>
+        <rect x="98" y="18" width="10" height="10"/>
+      </g>
+      <g fill="#3e6e69" opacity=".72">
+        <rect x="22" y="22" width="8" height="8"/>
+        <rect x="82" y="102" width="8" height="8"/>
+        <rect x="122" y="62" width="8" height="8"/>
+      </g>
+      <g fill="#a51c30" opacity=".7">
+        <circle cx="28" cy="82" r="4"/>
+        <circle cx="108" cy="48" r="4"/>
+      </g>
+      <path d="M0 142L142 0" stroke="#26334f" stroke-width="1.2" opacity=".38"/>
+    </g>
+    <text class="mono small" x="28" y="206">pairing probability</text>
+    <text class="mono small" x="28" y="228">attention-derived contacts</text>
+  </g>
+
+  <!-- Information flow -->
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M266 223C288 223 298 223 318 223" stroke="#26334f" stroke-width="1.5" opacity=".55"/>
+    <path d="M568 223C596 223 610 223 634 223" stroke="#26334f" stroke-width="1.5" opacity=".55"/>
+    <path d="M284 213L318 223L284 233" stroke="#26334f" stroke-width="1.5" opacity=".55"/>
+    <path d="M600 213L634 223L600 233" stroke="#26334f" stroke-width="1.5" opacity=".55"/>
+  </g>
+
+  <!-- Full sequence grammar line -->
+  <g transform="translate(74 430)">
+    <path d="M0 30H752" stroke="#26334f" stroke-width="1.8" opacity=".64"/>
+    <g fill="none" stroke-linecap="round">
+      <path d="M30 28C82 -46 158 -46 210 28" stroke="#284a72" stroke-width="4" opacity=".9"/>
+      <path d="M158 28C230 -96 394 -96 488 28" stroke="#3e6e69" stroke-width="4" opacity=".86"/>
+      <path d="M414 28C470 -38 548 -38 604 28" stroke="#c4901a" stroke-width="4" opacity=".92"/>
+      <path d="M570 28C618 -54 704 -54 752 28" stroke="#3e6e69" stroke-width="3" opacity=".45" stroke-dasharray="5 8"/>
+    </g>
+    <g class="mono token">
+      <text x="-4" y="68">A</text><text x="50" y="68">C</text><text x="104" y="68">G</text><text x="158" y="68">U</text>
+      <text x="212" y="68">A</text><text x="266" y="68">G</text><text x="320" y="68">C</text><text x="374" y="68">U</text>
+      <text x="428" y="68">C</text><text x="482" y="68">A</text><text x="536" y="68">G</text><text x="590" y="68">U</text>
+      <text x="644" y="68">C</text><text x="698" y="68">G</text><text x="752" y="68">A</text>
+    </g>
+    <g fill="#a51c30">
+      <circle cx="4" cy="30" r="5" opacity=".78"/>
+      <circle cx="216" cy="30" r="4" opacity=".62"/>
+      <circle cx="486" cy="30" r="5" opacity=".7"/>
+      <circle cx="648" cy="30" r="4" opacity=".5"/>
+    </g>
+    <g fill="#26334f" opacity=".6">
+      <circle cx="0" cy="30" r="2.2"/><circle cx="54" cy="30" r="2.2"/><circle cx="108" cy="30" r="2.2"/>
+      <circle cx="162" cy="30" r="2.2"/><circle cx="216" cy="30" r="2.2"/><circle cx="270" cy="30" r="2.2"/>
+      <circle cx="324" cy="30" r="2.2"/><circle cx="378" cy="30" r="2.2"/><circle cx="432" cy="30" r="2.2"/>
+      <circle cx="486" cy="30" r="2.2"/><circle cx="540" cy="30" r="2.2"/><circle cx="594" cy="30" r="2.2"/>
+      <circle cx="648" cy="30" r="2.2"/><circle cx="702" cy="30" r="2.2"/><circle cx="756" cy="30" r="2.2"/>
+    </g>
+  </g>
+</svg>

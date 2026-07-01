@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Rouskin Lab — RNA structure, measured and modeled · Harvard Medical School</title>
+    <meta
+      name="description"
+      content="The Rouskin Lab at Harvard Medical School studies how RNA folds inside living cells. We develop DMS-MaPseq, DREEM, SEISMIC-RNA, and computational methods to read RNA structural ensembles, and use them to understand viral biology, splicing, and disease."
+    />
+    <link rel="icon" href="assets/favicon.webp" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+
+    <header class="site-header">
+      <a class="brand" href="index.html" aria-label="Rouskin Lab — Home">
+        <img src="assets/rouskin-logo-yellow.webp" alt="Rouskin Lab" />
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="research.html">Research</a>
+        <a href="publications.html">Publications</a>
+        <a href="explainers.html">Explainers</a>
+        <a href="people.html">People</a>
+        <a href="news.html">News</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <!-- ====================== HERO ====================== -->
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-inner">
+          <div class="hero-text">
+            <h1 id="hero-title">
+              RNA structure<br />
+              in living systems,<br />
+              <em>measured and modeled.</em>
+            </h1>
+            <p class="hero-byline">
+              <strong>The Rouskin Lab</strong>
+              at Harvard Medical School · Department of Microbiology
+            </p>
+            <p class="hero-lede">
+              We develop in-cell RNA structure measurements and the
+              computational methods needed to read them — from viral genomes and
+              human transcripts to disease-relevant ensembles.
+            </p>
+
+            <div class="hero-meta" role="list">
+              <div role="listitem">
+                <span class="label">Measurement</span>
+                <span class="value">DMS-MaPseq · DREEM · SEISMIC-RNA</span>
+              </div>
+              <div role="listitem">
+                <span class="label">Computation</span>
+                <span class="value">Ensemble inference &amp; RNA models</span>
+              </div>
+              <div role="listitem">
+                <span class="label">Systems</span>
+                <span class="value">HIV-1 · SARS-CoV-2 · Splicing · Telomerase</span>
+              </div>
+            </div>
+
+            <div class="hero-cta">
+              <a class="link" href="research.html">Explore research</a>
+              <a class="link" href="publications.html">Publications</a>
+              <a class="link-quiet" href="contact.html">Join the lab</a>
+            </div>
+          </div>
+
+          <div class="rna-stage" aria-label="Animated RNA structure map with backbone, base pairs, and probing signals">
+            <canvas id="rnaHero" aria-hidden="true"></canvas>
+            <!-- Fallback used when WebGL is unavailable -->
+            <div class="rna-stage-fallback" aria-hidden="true">
+              <svg viewBox="0 0 400 520" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="bb" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#5a3220"/>
+                    <stop offset="1" stop-color="#1a0a06"/>
+                  </linearGradient>
+                </defs>
+                <!-- backbone hairpin -->
+                <path d="M120,30 C130,140 100,200 130,260 C160,320 200,360 200,420
+                         C200,360 240,320 270,260 C300,200 270,140 280,30"
+                      fill="none" stroke="url(#bb)" stroke-width="11" stroke-linecap="round"/>
+                <!-- base pair rungs -->
+                <g stroke="#d6c69a" stroke-width="3" opacity="0.85">
+                  <line x1="124" y1="80"  x2="276" y2="80" />
+                  <line x1="118" y1="120" x2="282" y2="120"/>
+                  <line x1="114" y1="160" x2="286" y2="160"/>
+                  <line x1="116" y1="200" x2="284" y2="200"/>
+                  <line x1="124" y1="240" x2="276" y2="240"/>
+                  <line x1="138" y1="280" x2="262" y2="280"/>
+                </g>
+                <!-- bases -->
+                <g>
+                  <circle cx="124" cy="80"  r="9" fill="#9e1b32"/>
+                  <circle cx="276" cy="80"  r="9" fill="#c98f1c"/>
+                  <circle cx="118" cy="120" r="9" fill="#3e6e69"/>
+                  <circle cx="282" cy="120" r="9" fill="#284a72"/>
+                  <circle cx="114" cy="160" r="9" fill="#c98f1c"/>
+                  <circle cx="286" cy="160" r="9" fill="#9e1b32"/>
+                  <circle cx="116" cy="200" r="9" fill="#284a72"/>
+                  <circle cx="284" cy="200" r="9" fill="#3e6e69"/>
+                  <circle cx="124" cy="240" r="9" fill="#9e1b32"/>
+                  <circle cx="276" cy="240" r="9" fill="#c98f1c"/>
+                  <circle cx="138" cy="280" r="9" fill="#3e6e69"/>
+                  <circle cx="262" cy="280" r="9" fill="#284a72"/>
+                  <!-- loop dots -->
+                  <circle cx="200" cy="420" r="9" fill="#c98f1c"/>
+                  <circle cx="170" cy="395" r="9" fill="#9e1b32"/>
+                  <circle cx="230" cy="395" r="9" fill="#3e6e69"/>
+                </g>
+              </svg>
+            </div>
+
+            <div class="rna-stage-readout" aria-hidden="true">
+              <span class="rna-chip">DMS reactivity</span>
+              <span class="rna-chip b">Ensemble inference</span>
+              <span class="rna-chip c">In-cell probing</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== INTRO ====================== -->
+      <section class="section intro" aria-labelledby="intro-title">
+        <div class="intro-grid">
+          <div>
+            <p class="kicker">The Rouskin Lab</p>
+            <h2 id="intro-title">
+              The same RNA sequence can fold into more than one structure —
+              and <em>those alternatives</em> regulate biology.
+            </h2>
+          </div>
+          <div class="intro-copy">
+            <p>
+              We work at the boundary between RNA biochemistry, statistical
+              inference, and machine learning. Our measurements turn the
+              chemistry of folded RNA inside living cells into quantitative
+              sequencing data. Our computation turns that data into structural
+              ensembles, hypotheses, and falsifiable predictions.
+            </p>
+            <p>
+              The lab uses this loop to study viral RNA genomes, alternative
+              splicing, antibiotic resistance, telomerase regulation, and the
+              broader question of how RNA structure controls gene expression
+              and disease.
+            </p>
+          </div>
+        </div>
+
+        <div class="intro-methods" aria-label="Lab methods">
+          <div>
+            <strong>DMS-MaPseq</strong>
+            <small>Chemical accessibility of A &amp; C in vitro and in cells, read out by deep sequencing.</small>
+          </div>
+          <div>
+            <strong>DREEM</strong>
+            <small>Detect RNA Ensembles by Expectation–Maximization — separating mixed conformations from noisy reads.</small>
+          </div>
+          <div>
+            <strong>SEARCH-MaP</strong>
+            <small>Long-range base-pair discovery in coronavirus genomes and other large structured RNAs.</small>
+          </div>
+          <div>
+            <strong>SEISMIC-RNA</strong>
+            <small>Open analysis pipeline for chemical probing data, ensemble deconvolution, and uncertainty.</small>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== FEATURED PAPERS ====================== -->
+      <section class="featured-papers" aria-labelledby="papers-title">
+        <div class="container">
+          <div class="section-header">
+            <div>
+              <p class="kicker">Recent work</p>
+              <h2 id="papers-title">Selected papers and preprints.</h2>
+            </div>
+            <a class="link-quiet" href="publications.html">All publications</a>
+          </div>
+
+          <div class="paper-list">
+            <a class="paper-row" href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11754830/">
+              <div class="paper-year">2025</div>
+              <div class="paper-venue">Nature Communications</div>
+              <div>
+                <h3>Telomerase RNA structural heterogeneity in living human cells detected by DMS-MaPseq</h3>
+                <p>In-cell measurement of human telomerase RNA reveals coexisting structural states — and a more complex picture of telomerase regulation than crystal structures alone suggest.</p>
+              </div>
+              <div class="paper-arrow" aria-hidden="true">→</div>
+            </a>
+
+            <a class="paper-row" href="https://www.science.org/doi/10.1126/science.adm9238">
+              <div class="paper-year">2024</div>
+              <div class="paper-venue">Science</div>
+              <div>
+                <h3>The human mitochondrial mRNA structurome reveals mechanisms of gene expression</h3>
+                <p>A transcriptome-scale map of mitochondrial mRNA structure connects folding to regulation of mitochondrial gene expression.</p>
+              </div>
+              <div class="paper-arrow" aria-hidden="true">→</div>
+            </a>
+
+            <a class="paper-row" href="https://www.ncbi.nlm.nih.gov/pubmed/38746332">
+              <div class="paper-year">2024</div>
+              <div class="paper-venue">bioRxiv preprint</div>
+              <div>
+                <h3>Discovery and quantification of long-range RNA base pairs in coronavirus genomes with SEARCH-MaP and SEISMIC-RNA</h3>
+                <p>A new experimental–computational pipeline to find and quantify long-range pairings in viral RNA genomes, applied to SARS-CoV-2.</p>
+              </div>
+              <div class="paper-arrow" aria-hidden="true">→</div>
+            </a>
+
+            <a class="paper-row" href="https://www.nature.com/articles/s41586-020-2253-5">
+              <div class="paper-year">2020</div>
+              <div class="paper-venue">Nature</div>
+              <div>
+                <h3>Determination of RNA structural diversity and its role in HIV-1 RNA splicing regulation</h3>
+                <p>DREEM separates coexisting HIV-1 RNA conformations from in-cell DMS data and links them to splicing — the first demonstration that one viral RNA sequence regulates itself through multiple structures.</p>
+              </div>
+              <div class="paper-arrow" aria-hidden="true">→</div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== RESEARCH ====================== -->
+      <section class="section">
+        <div class="section-header">
+          <div>
+            <p class="kicker amber">Research</p>
+            <h2>Five threads, one biological question.</h2>
+          </div>
+          <a class="link-quiet" href="research.html">Full research</a>
+        </div>
+
+        <div class="research-grid">
+          <a class="research-card feature" href="research.html#computation">
+            <div class="media contain">
+              <img src="assets/computational-rna-model.svg" alt="RNA language model diagram showing sequence tokens, learned dependency arcs, a contact map, and DMS validation marks." />
+            </div>
+            <div class="body">
+              <p class="kicker amber">Computation</p>
+              <h3>RNA language models that expose structure from sequence</h3>
+              <p>
+                Sequence-trained RNA models can learn hidden dependencies
+                between distant nucleotides. We compare those signals with
+                in-cell probing to ask when model-derived couplings recover
+                structure — and when cellular folding tells a different story.
+              </p>
+              <span class="card-link">Read more</span>
+            </div>
+          </a>
+
+          <a class="research-card std" href="research.html#probing">
+            <div class="media contain">
+              <img src="assets/dms-current.webp" alt="DMS chemical probing illustration showing reactivity at unpaired bases." />
+            </div>
+            <div class="body">
+              <p class="kicker">Measurement</p>
+              <h3>In-cell RNA structure probing</h3>
+              <p>
+                DMS-MaPseq turns the chemical accessibility of A and C in living
+                cells into reverse-transcription mutations — and into quantitative
+                sequencing-readable signal.
+              </p>
+              <span class="card-link">Read more</span>
+            </div>
+          </a>
+
+          <a class="research-card half" href="research.html#viral-rna">
+            <div class="media contain viral-rna-media">
+              <img src="assets/research-hiv.webp" alt="HIV-1 RNA structure illustration." />
+            </div>
+            <div class="body">
+              <p class="kicker">Viral RNA</p>
+              <h3>Structure and regulation of viral RNA genomes</h3>
+              <p>
+                HIV-1, SARS-CoV-2, and other RNA viruses encode regulatory
+                programs in folded RNA. We map them in their host context.
+              </p>
+              <span class="card-link">Read more</span>
+            </div>
+          </a>
+
+          <a class="research-card half" href="research.html#alternative-structures">
+            <div class="media">
+              <img src="assets/alternative-rna-structures.webp" alt="Two alternative RNA conformations of the same sequence." />
+            </div>
+            <div class="body">
+              <p class="kicker">RNA ensembles</p>
+              <h3>Alternative RNA structures</h3>
+              <p>
+                When does the same sequence fold into multiple competing
+                states, and how do those states shape gene regulation?
+              </p>
+              <span class="card-link">Read more</span>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- ====================== NEWS PREVIEW ====================== -->
+      <section class="section" aria-labelledby="news-title">
+        <div class="section-header">
+          <div>
+            <p class="kicker">From the lab</p>
+            <h2 id="news-title">News &amp; coverage</h2>
+          </div>
+          <a class="link-quiet" href="news.html">All news</a>
+        </div>
+
+        <div class="news-grid">
+          <a class="news-card" href="news.html#nextepoch-2024">
+            <div class="media"><img src="assets/news-nextepoch.jpg" alt="NextEpoch 2024 winners" /></div>
+            <div class="body">
+              <time datetime="2024-08-09">Aug 09, 2024</time>
+              <h3>Congratulations to the winners of NextEpoch 2024</h3>
+            </div>
+          </a>
+          <a class="news-card" href="news.html#klebsiella-pnas">
+            <div class="media"><img src="assets/news-pnas-klebsiella.jpg" alt="Klebsiella pneumoniae RNA structure figure" /></div>
+            <div class="body">
+              <time datetime="2022-09-12">Sep 12, 2022</time>
+              <h3>RNA structure drives carbapenem resistance in <em>Klebsiella pneumoniae</em></h3>
+            </div>
+          </a>
+          <a class="news-card" href="news.html#whitehead-hiv">
+            <div class="media"><img src="assets/news-whitehead-hiv.jpg" alt="Whitehead Institute news on alternative HIV-1 RNA structures" /></div>
+            <div class="body">
+              <time datetime="2020-05-06">May 06, 2020</time>
+              <h3>Whitehead News: HIV genome bends to control its own gene expression</h3>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      <!-- ====================== AFFILIATION ====================== -->
+      <section class="affiliations" aria-labelledby="affil-title">
+        <div class="affiliations-inner">
+          <div>
+            <p class="kicker">Institutional context</p>
+            <h2 id="affil-title">A Harvard Medical School lab in the Department of Microbiology.</h2>
+            <p>
+              We sit between RNA biology, virology, and quantitative biology —
+              and we collaborate broadly across HMS, the wider Harvard
+              ecosystem, and the structural &amp; computational biology
+              community.
+            </p>
+          </div>
+          <div class="affiliations-logos">
+            <img src="assets/institutional-logos.jpg" alt="Institutional logos: Harvard Medical School, Department of Microbiology and partners." />
+          </div>
+        </div>
+      </section>
+
+      <!-- ====================== JOIN BAND ====================== -->
+      <aside class="join" aria-labelledby="join-title">
+        <div>
+          <p class="kicker">Join the lab</p>
+          <h2 id="join-title">
+            Looking for trainees who want to <em>connect rigorous measurement with computation.</em>
+          </h2>
+          <p>
+            Backgrounds in machine learning, statistics, computational biology,
+            biochemistry, virology, and cell biology are all welcome — what
+            matters is willingness to move between the bench and the model.
+          </p>
+        </div>
+        <a class="link" href="contact.html">Contact the lab</a>
+      </aside>
+    </main>
+
+    <!-- ====================== FOOTER ====================== -->
+    <footer class="site-footer">
+      <div class="footer-grid">
+        <div>
+          <div class="footer-brand">
+            The Rouskin Lab
+            <small>Harvard Medical School · Department of Microbiology</small>
+          </div>
+          <address>
+            77 Avenue Louis Pasteur<br />
+            NRB 930 · Boston, MA 02115<br />
+            <a href="mailto:silvi_rouskin@hms.harvard.edu">silvi_rouskin@hms.harvard.edu</a>
+          </address>
+        </div>
+        <div class="footer-col">
+          <h4>Lab</h4>
+          <ul>
+            <li><a href="research.html">Research</a></li>
+            <li><a href="publications.html">Publications</a></li>
+            <li><a href="explainers.html">Explainers</a></li>
+            <li><a href="people.html">People</a></li>
+          </ul>
+        </div>
+        <div class="footer-col">
+          <h4>More</h4>
+          <ul>
+            <li><a href="news.html">News &amp; media</a></li>
+            <li><a href="contact.html">Contact</a></li>
+            <li><a href="https://micro.hms.harvard.edu">HMS Microbiology</a></li>
+            <li><a href="https://twitter.com/RouskinLab">@RouskinLab</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="footer-meta">
+        <span>© Rouskin Lab</span>
+        <span>Site built with restraint, in service of the science.</span>
+      </div>
+    </footer>
+
+    <script type="module" src="scripts/rna-hero.js"></script>
+    <script>
+      // Tiny reveal-on-scroll
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        const els = document.querySelectorAll(".reveal, .section, .research-card, .news-card, .paper-row");
+        const io = new IntersectionObserver((entries) => {
+          entries.forEach((e) => {
+            if (e.isIntersecting) {
+              e.target.classList.add("is-visible");
+              io.unobserve(e.target);
+            }
+          });
+        }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" });
+        els.forEach((el) => io.observe(el));
+      })();
+    </script>
+  </body>
+</html>

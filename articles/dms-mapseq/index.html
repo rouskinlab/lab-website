@@ -1,0 +1,996 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Reading RNA structure as mutations — DMS-MaPseq</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#eef1f4;
+  --panel:#ffffff;
+  --ink:#15212b;
+  --ink-soft:#5a6b78;
+  --line:#d3dbe1;
+  --protect:#0e7490;        /* paired / protected */
+  --protect-soft:#d3e7eb;
+  --reactive:#e8602c;       /* open / DMS-reactive */
+  --reactive-soft:#fbe2d4;
+  --mutation:#d6306b;       /* the sequenced mutation channel (signature) */
+  --mutation-soft:#f8d8e4;
+  --neutral:#97a4af;        /* G / U, non-reactive */
+  --focus:#3b4fb0;
+  --display:"Space Grotesk",system-ui,sans-serif;
+  --serif:"Newsreader",Georgia,serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --col:min(720px,92vw);
+  --wide:min(960px,94vw);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:var(--serif);font-size:19px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{display:flex;flex-direction:column;align-items:center}
+.col{width:var(--col)}
+.wide{width:var(--wide)}
+p{margin:0 0 1.1em}
+a{color:var(--protect);text-decoration-thickness:1px;text-underline-offset:2px}
+strong{font-weight:600}
+em.term{font-style:normal;font-weight:600;color:var(--ink);border-bottom:2px solid var(--reactive-soft)}
+.mono{font-family:var(--mono)}
+
+/* ---------- header / hero ---------- */
+header{width:100%;background:
+   radial-gradient(120% 90% at 80% -10%, #ffffff 0%, var(--paper) 55%);
+  border-bottom:1px solid var(--line);padding:0 0 8px}
+.hero{padding:64px 0 28px}
+.eyebrow{font-family:var(--mono);font-size:12.5px;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--protect);margin:0 0 18px;font-weight:500}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(34px,5.4vw,56px);
+  line-height:1.04;letter-spacing:-.02em;margin:0 0 22px}
+h1 .hl{color:var(--reactive)}
+h1 .hl2{color:var(--mutation)}
+.lede{font-size:clamp(19px,2.2vw,23px);color:var(--ink);max-width:34em;margin:0 0 6px}
+.byline{font-family:var(--mono);font-size:13px;color:var(--ink-soft);margin-top:26px}
+.byline span{color:var(--ink)}
+
+/* hero figure */
+.heroFig{width:var(--wide);margin:30px auto 0}
+.heroFig svg{width:100%;height:auto;display:block;
+  background:var(--panel);border:1px solid var(--line);border-radius:14px}
+
+/* ---------- section scaffolding ---------- */
+section{width:100%;display:flex;flex-direction:column;align-items:center;padding:46px 0}
+.kicker{font-family:var(--mono);font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink-soft);margin:0 0 10px;display:flex;align-items:center;gap:12px}
+.kicker .num{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:7px;
+  background:var(--ink);color:#fff;font-weight:700;font-size:13px;letter-spacing:0}
+h2{font-family:var(--display);font-weight:600;font-size:clamp(26px,3.6vw,36px);
+  line-height:1.1;letter-spacing:-.015em;margin:0 0 18px}
+h3{font-family:var(--display);font-weight:500;font-size:20px;margin:30px 0 8px;letter-spacing:-.01em}
+
+/* asides for the two reader backgrounds */
+.aside{border-radius:12px;padding:15px 18px;margin:18px 0;font-size:16.5px;line-height:1.55}
+.aside .tag{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  display:inline-block;margin-bottom:5px;font-weight:700}
+.aside.ai{background:#eef0fb;border-left:3px solid var(--focus)}
+.aside.ai .tag{color:var(--focus)}
+.aside.bio{background:var(--protect-soft);border-left:3px solid var(--protect)}
+.aside.bio .tag{color:var(--protect)}
+.aside p{margin:0}
+
+/* instrument panel that interactives live in */
+.panel{width:var(--wide);background:var(--panel);border:1px solid var(--line);
+  border-radius:14px;padding:22px 22px 18px;margin:8px 0 6px;
+  box-shadow:0 1px 0 rgba(21,33,43,.03),0 18px 40px -34px rgba(21,33,43,.4)}
+.panel .ptitle{font-family:var(--display);font-weight:600;font-size:15.5px;letter-spacing:.01em;margin:0 0 2px}
+.panel .psub{font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin:0 0 14px}
+.panel svg{display:block;width:100%;height:auto}
+.cap{width:var(--wide);font-size:15px;color:var(--ink-soft);line-height:1.5;margin:4px 0 0;font-style:italic}
+.cap b{font-style:normal;color:var(--ink);font-weight:600}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0 4px}
+button.btn{font-family:var(--display);font-weight:500;font-size:14px;border:1px solid var(--ink);
+  background:var(--ink);color:#fff;padding:8px 16px;border-radius:9px;cursor:pointer;transition:.15s}
+button.btn.ghost{background:transparent;color:var(--ink)}
+button.btn:hover{transform:translateY(-1px)}
+button.btn:disabled{opacity:.4;cursor:default;transform:none}
+button.btn:focus-visible,input:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.readout{font-family:var(--mono);font-size:13px;color:var(--ink-soft);margin-left:auto}
+.readout b{color:var(--ink)}
+input[type=range]{accent-color:var(--reactive);height:4px}
+.slabel{font-family:var(--mono);font-size:12.5px;color:var(--ink-soft);display:flex;gap:10px;align-items:center}
+.slabel b{color:var(--ink);min-width:62px;display:inline-block}
+
+/* legend */
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-family:var(--mono);font-size:12px;color:var(--ink-soft);margin:12px 0 0}
+.legend span{display:inline-flex;align-items:center;gap:7px}
+.swatch{width:13px;height:13px;border-radius:3px;display:inline-block;border:1px solid rgba(0,0,0,.1)}
+
+/* toggle pills */
+.pills{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pills button{font-family:var(--display);font-size:13.5px;border:0;background:transparent;
+  padding:8px 16px;cursor:pointer;color:var(--ink-soft)}
+.pills button.on{background:var(--ink);color:#fff}
+
+/* applications cards */
+.cards{width:var(--wide);display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px}
+.card .ch{font-family:var(--display);font-weight:600;font-size:16px;margin:0 0 6px}
+.card .cm{font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:var(--reactive);text-transform:uppercase;margin:0 0 8px}
+.card p{font-size:15.5px;line-height:1.5;margin:0}
+
+/* recap */
+.recap{width:var(--wide);background:var(--ink);color:#e9eef1;border-radius:16px;padding:30px 30px 26px}
+.recap h2{color:#fff}
+.recap ol{margin:0;padding-left:0;list-style:none;counter-reset:r}
+.recap li{counter-increment:r;position:relative;padding:12px 0 12px 46px;border-top:1px solid #2c3a45;font-size:16.5px}
+.recap li:first-child{border-top:0}
+.recap li::before{content:counter(r);position:absolute;left:0;top:12px;font-family:var(--mono);
+  font-weight:700;color:var(--reactive);width:30px;height:30px;border:1px solid #36454f;border-radius:8px;
+  display:grid;place-items:center;font-size:13px}
+.recap b{color:#fff}
+
+footer{width:100%;border-top:1px solid var(--line);padding:30px 0 60px;display:flex;justify-content:center}
+.foot{width:var(--wide);font-family:var(--mono);font-size:13px;color:var(--ink-soft);line-height:1.7}
+.foot a{color:var(--protect)}
+
+/* base glyphs reused */
+.note{font-family:var(--mono);font-size:12px;fill:var(--ink-soft)}
+.lab-home-link{
+  position:fixed;left:18px;bottom:18px;z-index:90;
+  font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--ink);background:rgba(255,253,247,.82);border:1px solid var(--line);
+  padding:9px 11px;border-radius:8px;text-decoration:none;backdrop-filter:blur(10px)
+}
+.lab-home-link:hover{border-color:var(--protect);color:var(--protect)}
+
+@media (max-width:680px){
+  body{font-size:17.5px}
+  .cards{grid-template-columns:1fr}
+  .readout{margin-left:0;width:100%}
+}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *{animation:none !important;transition:none !important}
+}
+</style>
+</head>
+<body>
+<a class="lab-home-link" href="../../">Rouskin Lab</a>
+<div class="wrap">
+
+<!-- ============ HEADER ============ -->
+<header>
+  <div class="col hero">
+    <p class="eyebrow">RNA structure probing · method explainer</p>
+    <h1>DMS-MaPseq reads in-cell RNA accessibility as <span class="hl">sequencing mutations</span>.</h1>
+    <p class="lede">The method turns a chemical reaction into a quantitative structure signal. DMS marks
+      adenines and cytosines that are accessible inside the cell; a read-through reverse transcriptase
+      writes those marks as mismatches; and mismatch rates become a per-base view of RNA structure.</p>
+    <p class="byline">After Zubradt, Gupta, Persad, Lambowitz, Weissman &amp; Rouskin, <span>Nature Methods</span> 2017 · built for readers fluent in <span>either</span> deep learning <span>or</span> RNA biology, not necessarily both.</p>
+  </div>
+  <div class="heroFig" id="hero"></div>
+</header>
+
+<!-- ============ 1 · THE QUESTION ============ -->
+<section>
+  <div class="col">
+    <p class="kicker"><span class="num">1</span> The question</p>
+    <h2>A sequence is not a shape</h2>
+    <p>An RNA molecule is a string over four letters — A, C, G, U — but it does not stay a string. It folds
+      back on itself, pairing complementary letters (A·U, G·C) into double-stranded <em class="term">stems</em>,
+      leaving the unpaired letters out in <em class="term">loops</em>. That folded shape is what decides what the
+      RNA <em>does</em>: whether a ribosome can start translating it, whether it gets shipped to one end of a cell,
+      whether a single point mutation flips it into a different conformation.</p>
+    <p>So the central measurement is deceptively simple to state: <strong>for every position in the molecule,
+      is that base paired (buried) or unpaired (exposed)?</strong> Answer that across a whole transcript and you
+      can reconstruct the structure. The catch is doing it <em>in vivo</em> — on real RNA, at native
+      concentrations, inside cells — at single-nucleotide resolution.</p>
+
+    <div class="aside ai">
+      <span class="tag">If you come from ML</span>
+      <p>Think of it as recovering a per-token label — <span class="mono">exposed</span> vs
+        <span class="mono">buried</span> — for a sequence, where the label is never observed directly. You only
+        get an indirect, noisy readout, and your job is to estimate the per-position probability of "exposed"
+        from many independent measurements.</p>
+    </div>
+    <div class="aside bio">
+      <span class="tag">If you come from RNA</span>
+      <p>This is the same goal as classic footprinting or SHAPE, but the contribution here is the
+        <span class="mono">readout chemistry</span>, not the probe. Hold onto the distinction between
+        <em>how a base gets marked</em> (DMS) and <em>how that mark is detected</em> (reverse transcription).
+        The whole method lives in the second step.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 2 · THE PROBE ============ -->
+<section>
+  <div class="col">
+    <p class="kicker"><span class="num">2</span> The probe</p>
+    <h2>DMS stains only the open bases</h2>
+    <p>Dimethyl sulfate (DMS) is a small reagent that diffuses into cells and methylates adenine and cytosine —
+      but only on the chemical face those bases use to pair up (the Watson–Crick edge). If an A or C is locked in
+      a stem, that face is occupied and DMS can't touch it. If it's sitting in a loop, the face is free and DMS
+      tags it. G and U are effectively invisible to this readout, so the probe reports on A's and C's.</p>
+    <p>That single fact is the whole physical basis of the method: <strong>a DMS mark means "this A or C was
+      unpaired at the moment of treatment."</strong> Release the reagent below and watch where it sticks.</p>
+  </div>
+
+  <div class="panel" id="dms">
+    <p class="ptitle">DMS reactivity on a hairpin</p>
+    <p class="psub">stem bases are paired · loop bases are exposed · only unpaired A &amp; C get marked</p>
+    <div id="dmsSvg"></div>
+    <div class="controls">
+      <button class="btn" id="dmsGo">Release DMS</button>
+      <button class="btn ghost" id="dmsReset">Reset</button>
+      <span class="readout">marked: <b id="dmsCount">0</b> bases</span>
+    </div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--protect-soft);border-color:var(--protect)"></i>paired (protected)</span>
+      <span><i class="swatch" style="background:#fff"></i>unpaired A / C (reactive)</span>
+      <span><i class="swatch" style="background:#eef1f4;border-color:var(--neutral)"></i>unpaired G / U (not read)</span>
+      <span><i class="swatch" style="background:var(--reactive)"></i>DMS mark</span>
+    </div>
+  </div>
+  <p class="cap"><b>What to notice:</b> reagent that reaches a stem base or a G/U bounces off. It only commits to
+    unpaired A and C. The pattern of marks is a fingerprint of the loop.</p>
+</section>
+
+<!-- ============ 3 · THE READOUT PROBLEM ============ -->
+<section>
+  <div class="col">
+    <p class="kicker"><span class="num">3</span> The readout</p>
+    <h2>The hard part: seeing a chemical mark in a sequencer</h2>
+    <p>A sequencer reads DNA letters; it cannot see a methyl group on an RNA base. To convert the RNA (with its
+      marks) into readable DNA, you use <em class="term">reverse transcriptase</em> (RT), an enzyme that crawls
+      along the RNA and writes a complementary DNA copy. The question is what RT does when it hits a marked base —
+      and this is exactly where DMS-MaPseq parts ways with everything before it.</p>
+
+    <div class="aside ai">
+      <span class="tag">If you come from ML</span>
+      <p>Two encoders of the same event. The old one is a <span class="mono">1-bit, lossy</span> channel: it can
+        emit the location of <em>one</em> mark per molecule and then the read ends. The new one is a
+        <span class="mono">high-capacity</span> channel: every mark on the molecule is written inline as a symbol
+        substitution, so one read carries the full joint pattern of marks.</p>
+    </div>
+
+    <p>The legacy approach (<em>truncation</em>): RT falls off the RNA when it reaches a mark. The <em>end</em> of
+      the resulting DNA fragment therefore pinpoints where a mark was. But once RT falls off, the rest of the
+      molecule is gone — so you learn about <strong>only the single most-downstream mark</strong>, one bit per
+      molecule.</p>
+    <p>DMS-MaPseq (<em>mutational profiling</em>): using a read-through enzyme, RT does <em>not</em> stop. At a
+      marked base it incorporates the <em>wrong</em> letter — a mismatch — and keeps going. Now a single DNA copy
+      records <strong>every</strong> mark on that molecule, as a pattern of mismatches. Run both side by side:</p>
+  </div>
+
+  <div class="panel" id="rt">
+    <p class="ptitle">One molecule, three marks — two ways to read it</p>
+    <p class="psub">RT enters at the 3′ end and copies toward 5′ · watch what survives</p>
+    <div id="rtSvg"></div>
+    <div class="controls">
+      <button class="btn" id="rtPlay">Play</button>
+      <button class="btn ghost" id="rtStep">Step</button>
+      <button class="btn ghost" id="rtReset">Reset</button>
+      <span class="readout">marks recorded — truncation <b id="rtT">0/3</b> · MaP <b id="rtM">0/3</b></span>
+    </div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--reactive)"></i>DMS mark on template</span>
+      <span><i class="swatch" style="background:#e9eef1;border-color:var(--ink-soft)"></i>cDNA written by RT</span>
+      <span><i class="swatch" style="background:var(--mutation)"></i>mismatch (the recorded signal)</span>
+    </div>
+  </div>
+  <p class="cap"><b>The whole paper in one frame:</b> truncation throws away the molecule after the first mark it
+    meets. Mutational profiling keeps the molecule intact and turns each mark into a typo you can later count.
+    More marks per molecule is what unlocks everything downstream.</p>
+</section>
+
+<!-- ============ 4 · FROM READS TO A MAP ============ -->
+<section>
+  <div class="col">
+    <p class="kicker"><span class="num">4</span> The calculation</p>
+    <h2>Stack the reads, count the mutations</h2>
+    <p>One read is noisy: a mark is probabilistic, and the enzyme isn't perfect. The signal lives in the
+      population. Align many reads of the same region into a <em class="term">pileup</em> and, for each column,
+      compute the fraction of reads that carry a mismatch there. That single number — mismatches ÷ total reads —
+      is the <em class="term">ratiometric DMS signal</em>: high where bases were open, near zero where they were
+      paired.</p>
+
+    <div class="aside bio">
+      <span class="tag">If you come from RNA</span>
+      <p>The denominator is the same molecules' total coverage, so the rate is internally normalized — no paired
+        untreated control is required for the structure calculation. The background is low and stochastic, not a
+        reproducible per-base offset you'd subtract.</p>
+    </div>
+    <div class="aside ai">
+      <span class="tag">If you come from ML</span>
+      <p>Each position's signal is just the maximum-likelihood estimate of a Bernoulli rate. Its variance scales
+        like 1/coverage, which is why depth matters: the authors find reproducibility climbs sharply past
+        <span class="mono">~20× </span>per-base coverage. Drag the slider and resample to feel the variance shrink.</p>
+    </div>
+  </div>
+
+  <div class="panel" id="pile">
+    <p class="ptitle">Pileup → per-position reactivity</p>
+    <p class="psub">each row is one read · pink cells are mismatches · bars below are mismatch ÷ total</p>
+    <div id="pileSvg"></div>
+    <div class="controls">
+      <span class="slabel"><b>coverage</b>
+        <input type="range" id="pileCov" min="3" max="160" value="8" style="width:200px">
+        <b id="pileCovN" style="min-width:46px">8×</b>
+      </span>
+      <button class="btn ghost" id="pileRe">Resample</button>
+      <span class="readout">low coverage ⇒ jumpy estimate · high ⇒ locks onto the truth</span>
+    </div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--mutation)"></i>mismatch</span>
+      <span><i class="swatch" style="background:#eef1f4;border-color:var(--line)"></i>match</span>
+      <span><i class="swatch" style="background:var(--reactive)"></i>measured reactivity</span>
+      <span><i class="swatch" style="background:repeating-linear-gradient(90deg,var(--ink-soft) 0 3px,transparent 3px 6px)"></i>true rate</span>
+    </div>
+  </div>
+  <p class="cap"><b>What to notice:</b> at low coverage the bars wander around the dashed "truth" each time you
+    resample. Push coverage up and they snap to it. The peaks are the unpaired A/C positions — the loop.</p>
+</section>
+
+<!-- ============ 5 · THE ENZYME ============ -->
+<section>
+  <div class="col">
+    <p class="kicker"><span class="num">5</span> The enzyme</p>
+    <h2>Why a thermostable group II intron RT, and not the usual one</h2>
+    <p>Mutational profiling only works if the enzyme reliably writes a <em>mismatch</em> at a mark — not a
+      deletion or insertion. The authors compare two read-through enzymes. The standard option, Superscript II
+      with manganese (SSII–Mn²⁺), turns nearly a third of its marks into insertions and deletions. The
+      <em class="term">TGIRT</em> enzyme keeps almost everything as clean substitutions.</p>
+    <p>That matters because of <em>where</em> the signal sits. A substitution names one exact position. An
+      indel inside a run of identical bases is ambiguous — you can't say which base it came from — so it smears
+      the single-nucleotide resolution the whole method depends on.</p>
+  </div>
+
+  <div class="panel" id="enz">
+    <p class="ptitle">Mutation type by enzyme &amp; why indels hurt</p>
+    <p class="psub">left: composition of recorded mutations · right: a deletion in a homopolymer is positionally ambiguous</p>
+    <div id="enzSvg"></div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--mutation)"></i>mismatch (usable, single-nt)</span>
+      <span><i class="swatch" style="background:#c9a227"></i>deletion</span>
+      <span><i class="swatch" style="background:var(--neutral)"></i>insertion</span>
+    </div>
+  </div>
+  <p class="cap"><b>What to notice:</b> TGIRT records ~94% of marks as mismatches vs ~71% for SSII–Mn²⁺. On the
+    right, one missing base in <span class="mono">A&#8202;A&#8202;A&#8202;A&#8202;A</span> could have come from any of the five — a mismatch
+    <span class="mono">A→G</span> could not. TGIRT also detects the harshest endogenous marks (methyl-A) at far
+    higher rates, which is why the authors use it for everything else.</p>
+</section>
+
+<!-- ============ 6 · THE PAYOFF ============ -->
+<section>
+  <div class="col">
+    <p class="kicker"><span class="num">6</span> The payoff</p>
+    <h2>Many marks per molecule means you can separate mixtures</h2>
+    <p>Here is what truncation could never do. If a region folds into two different shapes in the cell — two
+      <em class="term">subpopulations</em> — a population-average readout returns their blend, which often looks
+      like a third, fake structure that's no structure at all. Because DMS-MaPseq records the full mark pattern
+      on each molecule, those molecules can be told apart.</p>
+    <p>The paper's clean demonstration is a <em class="term">ribosnitch</em>: a single-nucleotide difference
+      between two alleles of human <span class="mono">MRPS21</span> that refolds the local structure. Analyzed
+      together the signal is mush; split by allele, two crisp, mutually exclusive structures appear. Toggle below.</p>
+  </div>
+
+  <div class="panel" id="rib">
+    <p class="ptitle">Two structures hiding in one average</p>
+    <p class="psub">reactivity across one region · the same data, combined vs. resolved</p>
+    <div class="controls" style="margin-top:0;margin-bottom:14px">
+      <span class="pills" id="ribPills">
+        <button data-m="combined" class="on">Combined</button>
+        <button data-m="split">Resolved by allele</button>
+      </span>
+      <span class="readout" id="ribNote">averaging blurs both states into an uninformative middle</span>
+    </div>
+    <div id="ribSvg"></div>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--reactive)"></i>open in this state</span>
+      <span><i class="swatch" style="background:var(--protect)"></i>paired in this state</span>
+      <span>★ = base whose pairing flips between alleles</span>
+    </div>
+  </div>
+  <p class="cap"><b>What to notice:</b> in the combined view the starred bases sit at an ambiguous half-height —
+    neither clearly open nor paired. Resolving by allele recovers two sharp, opposite patterns. This is the
+    foothold for single-molecule structure analysis in general.</p>
+</section>
+
+<!-- ============ 7 · REACHING ANY RNA ============ -->
+<section>
+  <div class="col">
+    <p class="kicker"><span class="num">7</span> Reaching any RNA</p>
+    <h2>Genome-wide is blind to rare transcripts — so target them</h2>
+    <p>A transcriptome-wide library spreads reads across everything, so low-abundance RNAs never reach usable
+      coverage. The authors estimate that even at a billion mapped reads, most human genes still fall short of the
+      ~20× threshold. The fix is to stop sequencing everything and amplify just the target: a gene-specific RT
+      primer, a gene-specific PCR, then fragmentation and sequencing. The chemistry is identical — only the
+      enrichment changes.</p>
+  </div>
+  <div class="panel" id="flow">
+    <p class="ptitle">Targeted DMS-MaPseq workflow</p>
+    <p class="psub">same in-cell marking · selective amplification brings any transcript into reach</p>
+    <div id="flowSvg"></div>
+  </div>
+  <p class="cap"><b>Optional refinement:</b> a random barcode (UMI) on the RT primer tags each original molecule,
+    so PCR duplicates can be collapsed — useful for quantitative or low-input work.</p>
+</section>
+
+<!-- ============ 8 · WHAT IT FOUND ============ -->
+<section>
+  <div class="col">
+    <p class="kicker"><span class="num">8</span> What it made possible</p>
+    <h2>Four things you couldn't do before</h2>
+    <p>The method is the result, but the paper grounds it in applications that each exploit a different new
+      capability — animal tissue, function, isoforms, and heterogeneity.</p>
+  </div>
+  <div class="cards">
+    <div class="card">
+      <p class="cm">Animal tissue</p>
+      <p class="ch">oskar in fly ovaries</p>
+      <p>First RNA-structure probing inside an animal tissue. Targeted DMS-MaPseq on dissected
+        <em>Drosophila</em> ovaries recovers the known <span class="mono">oskar</span> localization structure.</p>
+    </div>
+    <div class="card">
+      <p class="cm">Function</p>
+      <p class="ch">FXR2 starts at a GUG</p>
+      <p>An extremely GC-rich human 5′ region folds into stems flanking a non-canonical
+        <span class="mono">GUG</span> start. Disrupting the structure drops protein; compensatory mutations that
+        restore the fold restore output — so the structure itself is the regulator.</p>
+    </div>
+    <div class="card">
+      <p class="cm">Isoforms</p>
+      <p class="ch">pre- vs. mature mRNA</p>
+      <p>Intron- and exon-specific primers probe each splice isoform separately. The shared exon folds nearly
+        identically before and after splicing — local structure refolds fast.</p>
+    </div>
+    <div class="card">
+      <p class="cm">Heterogeneity</p>
+      <p class="ch">ribosnitch alleles</p>
+      <p>The <span class="mono">MRPS21</span> A/C alleles adopt two distinct local structures, invisible in the
+        average and separable here — the case from section 6.</p>
+    </div>
+    <div class="card">
+      <p class="cm">Quality</p>
+      <p class="ch">low, stochastic noise</p>
+      <p>Negative-control paired bases pile up at near-zero signal, and replicates agree well — the clean
+        signal-to-noise that lets a single ratio stand in for structure.</p>
+    </div>
+    <div class="card">
+      <p class="cm">Where it leads</p>
+      <p class="ch">co-occurrence of marks</p>
+      <p>Because each read carries multiple marks, the joint statistics of <em>which marks appear together</em>
+        become learnable — the raw material for clustering structural states and for models that predict pairing
+        from sequence.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 9 · LIMITS + RECAP ============ -->
+<section>
+  <div class="col">
+    <p class="kicker"><span class="num">9</span> Honest limits</p>
+    <h2>What it does not tell you</h2>
+    <p>DMS reports on A and C only, so G/U pairing is inferred indirectly. The reactivity signal is a per-base
+      <em>accessibility</em> measurement, not a structure — you still need a folding algorithm, with the data as
+      constraints, to propose base pairs, and that step carries its own assumptions (the FXR2 model shifts with
+      the reactivity threshold chosen). And while the data can in principle separate single-molecule states, the
+      paper demonstrates that mainly through known sequence differences (alleles); fully unsupervised clustering
+      of structural subpopulations is framed as the road ahead, not a solved result.</p>
+  </div>
+
+  <div class="recap">
+    <h2>The method in nine claims</h2>
+    <ol>
+      <li>RNA <b>shape</b>, not sequence, sets function — so you need per-base paired/unpaired calls in vivo.</li>
+      <li><b>DMS</b> methylates only <b>unpaired A and C</b>; a mark means "this base was open."</li>
+      <li>The mark must be read by an enzyme; the old way (<b>truncation</b>) records one mark per molecule and discards the rest.</li>
+      <li><b>Mutational profiling</b> writes each mark as a <b>mismatch</b> and reads through — every mark survives.</li>
+      <li>Per position, <b>mismatches ÷ total reads</b> is the structure signal; no untreated control needed.</li>
+      <li>Coverage controls variance; reproducibility climbs past <b>~20×</b>.</li>
+      <li><b>TGIRT</b> keeps marks as clean substitutions (not indels), preserving single-nucleotide resolution.</li>
+      <li>Multiple marks per molecule let you <b>separate mixtures</b> — e.g. ribosnitch alleles.</li>
+      <li><b>Targeted RT–PCR</b> brings rare transcripts, tissues, and isoforms into reach.</li>
+    </ol>
+  </div>
+</section>
+
+<footer>
+  <div class="foot">
+    Source — Zubradt M, Gupta P, Persad S, Lambowitz AM, Weissman JS, Rouskin S.
+    “DMS-MaPseq for genome-wide or targeted RNA structure probing in vivo.”
+    <a href="https://doi.org/10.1038/nmeth.4057">Nature Methods 14, 75–82 (2017)</a>.<br>
+    All figures here are schematic reconstructions for teaching, not reproductions of the paper's figures.
+    Data values (mutation-type composition, coverage threshold) follow the numbers reported in the text.
+  </div>
+</footer>
+
+</div>
+
+<script>
+"use strict";
+const RM = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const SVGNS="http://www.w3.org/2000/svg";
+function el(tag,attrs,parent){const e=document.createElementNS(SVGNS,tag);
+  if(attrs)for(const k in attrs)e.setAttribute(k,attrs[k]); if(parent)parent.appendChild(e); return e;}
+function txt(s,attrs,parent){const t=el("text",attrs,parent);t.textContent=s;return t;}
+// seeded rng
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);
+  t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+// reactivity heat: pale -> vermilion -> dark
+function lerp(a,b,t){return a+(b-a)*t;}
+function heat(v){v=Math.max(0,Math.min(1,v));
+  let c1=[246,232,223],c2=[232,96,44],c3=[150,38,12],r,g,b;
+  if(v<0.55){const t=v/0.55;r=lerp(c1[0],c2[0],t);g=lerp(c1[1],c2[1],t);b=lerp(c1[2],c2[2],t);}
+  else{const t=(v-0.55)/0.45;r=lerp(c2[0],c3[0],t);g=lerp(c2[1],c3[1],t);b=lerp(c2[2],c3[2],t);}
+  return `rgb(${r|0},${g|0},${b|0})`;}
+const C={ink:"#15212b",inkSoft:"#5a6b78",line:"#d3dbe1",protect:"#0e7490",protectSoft:"#d3e7eb",
+  reactive:"#e8602c",mutation:"#d6306b",neutral:"#97a4af",paper:"#eef1f4"};
+
+/* ===================== HERO ===================== */
+(function(){
+  const host=document.getElementById('hero');
+  const W=960,H=300;
+  const s=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"From open base to chemical mark to sequenced mutation"},host);
+  // three-panel mini story: fold -> mark -> mutation
+  const pad=40, pw=(W-2*pad-60)/3;
+  const titles=["1 · base unpaired in a loop","2 · DMS marks it","3 · read out as a mismatch"];
+  for(let i=0;i<3;i++){
+    const x0=pad+i*(pw+30);
+    txt(titles[i],{x:x0,y:34,class:"note","font-family":"var(--mono)","font-size":12,fill:C.inkSoft},s);
+    if(i<2){el("path",{d:`M ${x0+pw+12} ${H/2} l 14 0 m -6 -6 l 6 6 l -6 6`,
+      stroke:C.inkSoft,fill:"none","stroke-width":1.5},s);}
+  }
+  // panel 1: tiny hairpin with one highlighted loop base
+  function miniHairpin(cx,cy,markIdx,marked,asMut){
+    const pairs=[["G","C"],["C","G"],["A","U"]];
+    const g=el("g",{},s);
+    for(let r=0;r<3;r++){
+      const y=cy-34+r*22;
+      base(g,cx-16,y,pairs[r][0],"#fff",C.protect);
+      base(g,cx+16,y,pairs[r][1],"#fff",C.protect);
+      el("line",{x1:cx-9,y1:y,x2:cx+9,y2:y,stroke:C.protect,"stroke-width":1.4,"stroke-dasharray":"2 2"},g);
+    }
+    // loop arc bases
+    const loop=["A","C","A"];
+    const ang=[Math.PI*0.8,Math.PI*0.5,Math.PI*0.2];
+    for(let k=0;k<3;k++){
+      const lx=cx+Math.cos(ang[k])*26, ly=(cy-34)-18+ -Math.sin(ang[k])*20;
+      let fill="#fff",stroke=C.line;
+      if(k===markIdx){
+        if(asMut){fill=C.mutation;stroke=C.mutation;}
+        else if(marked){fill=C.reactive;stroke=C.reactive;}
+      }
+      base(g,lx,ly,asMut&&k===markIdx?"G":loop[k],fill,stroke,(marked||asMut)&&k===markIdx?"#fff":C.ink);
+      if(k===markIdx&&marked&&!asMut){
+        txt("CH₃",{x:lx,y:ly-15,"text-anchor":"middle","font-family":"var(--mono)","font-size":9,fill:C.reactive},g);
+      }
+    }
+    return g;
+  }
+  function base(g,x,y,ch,fill,stroke,tc){
+    el("rect",{x:x-9,y:y-9,width:18,height:18,rx:4,fill:fill,stroke:stroke||C.line,"stroke-width":1.4},g);
+    txt(ch,{x:x,y:y+4,"text-anchor":"middle","font-family":"var(--mono)","font-size":11,"font-weight":700,fill:tc||C.ink},g);
+  }
+  const p1=pad+pw/2, p2=pad+pw+30+pw/2, p3=pad+2*(pw+30)+pw/2, cy=H/2+18;
+  const h1=miniHairpin(p1,cy,1,false,false);
+  const h2=miniHairpin(p2,cy,1,false,false);
+  const h3=miniHairpin(p3,cy,1,false,false);
+  if(RM){ h2.remove(); miniHairpin(p2,cy,1,true,false); h3.remove(); miniHairpin(p3,cy,1,false,true);}
+  else{
+    // animate marking then mutation
+    setTimeout(()=>{h2.remove();miniHairpin(p2,cy,1,true,false);},900);
+    setTimeout(()=>{h3.remove();miniHairpin(p3,cy,1,false,true);},1700);
+  }
+})();
+
+/* ===================== 2 · DMS SPECIFICITY ===================== */
+(function(){
+  const host=document.getElementById('dmsSvg');
+  const W=960,H=300;
+  const s=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"DMS marking unpaired adenine and cytosine on a hairpin"},host);
+  // hairpin layout, loop at top
+  // bases 0..4 left stem (bottom->top), 5..8 loop, 9..13 right stem (top->bottom)
+  const seq=["G","C","A","G","U","A","C","G","A","A","U","C","G","C"];
+  const paired=[true,true,true,true,true,false,false,false,false,true,true,true,true,true];
+  const cx=W/2, baseY=250, dy=30;
+  const pos=[];
+  for(let i=0;i<5;i++) pos[i]={x:cx-26,y:baseY-i*dy};            // left stem up
+  // loop arc (5..8) across top
+  const loopY=baseY-5*dy;
+  const loopAng=[Math.PI*0.95,Math.PI*0.66,Math.PI*0.34,Math.PI*0.05];
+  for(let k=0;k<4;k++){pos[5+k]={x:cx+Math.cos(loopAng[k])*40, y:loopY-30 - Math.sin(loopAng[k])*46};}
+  for(let i=0;i<5;i++) pos[9+i]={x:cx+26,y:loopY+i*dy};          // right stem down
+  // pair lines
+  for(let i=0;i<5;i++){const a=pos[i],b=pos[13-i];
+    el("line",{x1:a.x+10,y1:a.y,x2:b.x-10,y2:b.y,stroke:C.protect,"stroke-width":1.6,"stroke-dasharray":"3 3",opacity:.8},s);}
+  // backbone
+  let d="M "+pos[0].x+" "+pos[0].y;
+  for(let i=1;i<14;i++) d+=" L "+pos[i].x+" "+pos[i].y;
+  el("path",{d:d,fill:"none",stroke:C.line,"stroke-width":2},s);
+  // 5' 3' labels
+  txt("5′",{x:pos[0].x-22,y:pos[0].y+4,"font-family":"var(--mono)","font-size":12,fill:C.inkSoft},s);
+  txt("3′",{x:pos[13].x+12,y:pos[13].y+4,"font-family":"var(--mono)","font-size":12,fill:C.inkSoft},s);
+  // base nodes
+  const nodes=[];
+  const reactive=[]; // unpaired A/C
+  for(let i=0;i<14;i++){
+    const isAC=(seq[i]==="A"||seq[i]==="C");
+    const open=!paired[i];
+    const react=open&&isAC; reactive[i]=react;
+    let fill="#fff",stroke=C.line,tc=C.ink;
+    if(paired[i]){fill=C.protectSoft;stroke=C.protect;}
+    else if(!isAC){fill=C.paper;stroke=C.neutral;tc=C.inkSoft;} // unpaired G/U
+    const g=el("g",{},s);
+    const r=el("rect",{x:pos[i].x-11,y:pos[i].y-11,width:22,height:22,rx:5,fill:fill,stroke:stroke,"stroke-width":1.6},g);
+    txt(seq[i],{x:pos[i].x,y:pos[i].y+5,"text-anchor":"middle","font-family":"var(--mono)","font-size":13,"font-weight":700,fill:tc},g);
+    nodes[i]={g,r,marked:false,tc};
+  }
+  // labels
+  txt("loop — exposed",{x:cx+92,y:loopY-58,"font-family":"var(--mono)","font-size":12,fill:C.reactive},s);
+  txt("stem — paired",{x:cx-150,y:baseY-2*dy,"font-family":"var(--mono)","font-size":12,fill:C.protect,"text-anchor":"start"},s);
+  el("path",{d:`M ${cx-58} ${baseY-2*dy-4} q -22 4 -38 4`,stroke:C.protect,fill:"none","stroke-width":1},s);
+
+  const btn=document.getElementById('dmsGo'), rb=document.getElementById('dmsReset'),
+        cnt=document.getElementById('dmsCount');
+  let running=false;
+  function mark(i){if(nodes[i].marked)return;nodes[i].marked=true;
+    nodes[i].r.setAttribute("fill",C.reactive);nodes[i].r.setAttribute("stroke",C.reactive);
+    nodes[i].g.querySelector("text").setAttribute("fill","#fff");
+    txt("CH₃",{x:pos[i].x,y:pos[i].y-16,"text-anchor":"middle","font-family":"var(--mono)","font-size":9,fill:C.reactive,class:"dmsmethyl"},s);
+    cnt.textContent=nodes.filter(n=>n.marked).length;}
+  function reset(){nodes.forEach((n,i)=>{n.marked=false;
+    if(paired[i]){n.r.setAttribute("fill",C.protectSoft);n.r.setAttribute("stroke",C.protect);}
+    else if(seq[i]!=="A"&&seq[i]!=="C"){n.r.setAttribute("fill",C.paper);n.r.setAttribute("stroke",C.neutral);}
+    else{n.r.setAttribute("fill","#fff");n.r.setAttribute("stroke",C.line);}
+    n.g.querySelector("text").setAttribute("fill",n.tc);});
+    s.querySelectorAll(".dmsmethyl,.dmsdot").forEach(e=>e.remove());cnt.textContent="0";}
+  function fling(i,hit,delay){
+    // spawn a dot from a random edge, travel to base; if hit, mark; else bounce away
+    const startX=80+Math.random()*(W-160), startY=20+Math.random()*40;
+    const dot=el("circle",{cx:startX,cy:startY,r:5,fill:C.reactive,opacity:.9,class:"dmsdot"},s);
+    const tx=pos[i].x, ty=pos[i].y;
+    const t0=performance.now()+delay, dur=520;
+    function fr(now){const t=(now-t0)/dur;
+      if(t<0){requestAnimationFrame(fr);return;}
+      if(t>=1){
+        if(hit){mark(i);dot.remove();}
+        else{ // bounce off
+          const bx=tx+(tx-startX)*0.25+ (Math.random()*40-20), by=ty-40-Math.random()*30;
+          dot.setAttribute("cx",bx);dot.setAttribute("cy",by);dot.setAttribute("opacity",0);
+          setTimeout(()=>dot.remove(),300);
+        } return;}
+      const e=1-Math.pow(1-t,2);
+      dot.setAttribute("cx",lerp(startX,tx,e));dot.setAttribute("cy",lerp(startY,ty,e));
+      requestAnimationFrame(fr);}
+    requestAnimationFrame(fr);
+  }
+  function go(){
+    if(running)return;running=true;btn.disabled=true;
+    // sequence of attempts: hit reactive bases, plus a few decoys on protected/GU
+    const order=[];
+    for(let i=0;i<14;i++) if(reactive[i]) order.push({i,hit:true});
+    // decoys
+    const decoys=[];for(let i=0;i<14;i++) if(!reactive[i]) decoys.push(i);
+    for(let k=0;k<5;k++){const i=decoys[Math.floor(Math.random()*decoys.length)];order.push({i,hit:false});}
+    // shuffle
+    order.sort(()=>Math.random()-0.5);
+    if(RM){order.forEach(o=>{if(o.hit)mark(o.i);});running=false;btn.disabled=false;return;}
+    order.forEach((o,k)=>fling(o.i,o.hit,k*220));
+    setTimeout(()=>{running=false;btn.disabled=false;},order.length*220+700);
+  }
+  btn.addEventListener('click',go);
+  rb.addEventListener('click',()=>{if(!running)reset();});
+})();
+
+/* ===================== 3 · TRUNCATION vs MaP ===================== */
+(function(){
+  const host=document.getElementById('rtSvg');
+  const W=960,H=360;
+  const s=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Reverse transcription comparison: truncation versus mutational profiling"},host);
+  const N=18, bw=42, x0=70;
+  const mods=[3,9,14];           // mark positions (template index, 5'->3')
+  const xi=i=>x0+i*bw;
+  const yTplt=70, yLane=[170,290], laneLabel=["Truncation (legacy)","Mutational profiling (DMS-MaPseq)"];
+  // ---- shared template renderer ----
+  function drawTemplate(y){
+    txt("5′",{x:x0-34,y:y+5,"font-family":"var(--mono)","font-size":13,fill:C.inkSoft},s);
+    txt("3′",{x:xi(N-1)+22,y:y+5,"font-family":"var(--mono)","font-size":13,fill:C.inkSoft},s);
+    el("line",{x1:x0-6,y1:y,x2:xi(N-1)+6,y2:y,stroke:C.line,"stroke-width":2},s);
+    for(let i=0;i<N;i++){
+      const isMod=mods.includes(i);
+      el("rect",{x:xi(i)-13,y:y-13,width:26,height:26,rx:5,
+        fill:isMod?C.reactive:"#fff",stroke:isMod?C.reactive:C.line,"stroke-width":1.6},s);
+      if(isMod) txt("✚",{x:xi(i),y:y+5,"text-anchor":"middle","font-size":13,fill:"#fff","font-weight":700},s);
+    }
+  }
+  // labels for both lanes share one template at top? Use one template, two cDNA lanes referencing it.
+  txt("template RNA (one molecule, three DMS marks)",{x:x0-34,y:yTplt-30,"font-family":"var(--mono)","font-size":12,fill:C.inkSoft},s);
+  drawTemplate(yTplt);
+  // dividers / lane labels
+  [0,1].forEach(L=>{
+    txt(laneLabel[L],{x:x0-34,y:yLane[L]-34,"font-family":"var(--display)","font-size":14,"font-weight":600,
+      fill:L===0?C.inkSoft:C.mutation},s);
+    el("line",{x1:x0-34,y1:yLane[L]-22,x2:xi(N-1)+22,y2:yLane[L]-22,stroke:C.line,"stroke-width":1,"stroke-dasharray":"2 3"},s);
+  });
+  // RT heads + cdna groups
+  const cdnaG=[el("g",{},s),el("g",{},s)];
+  const rtHead=[mkHead(0),mkHead(1)];
+  function mkHead(L){const g=el("g",{opacity:0},s);
+    el("circle",{cx:0,cy:0,r:16,fill:L===0?C.inkSoft:C.mutation},g);
+    txt("RT",{x:0,y:4,"text-anchor":"middle","font-family":"var(--display)","font-size":11,"font-weight":700,fill:"#fff"},g);
+    return g;}
+  // logic: RT enters at 3' (i=N-1) moving to 5' (i=0). step s_ counts nt processed.
+  const truncStop = (N-1) - Math.max(...mods); // steps from 3' until first mark reached (inclusive)
+  let step=0, playing=false, raf=null;
+  const tOut=document.getElementById('rtT'), mOut=document.getElementById('rtM');
+  function render(){
+    cdnaG[0].textContent="";cdnaG[1].textContent="";
+    // lane 0 truncation: processes indices from N-1 down to (N-1-step), but stops at truncStop
+    const proc0=Math.min(step,truncStop);
+    const proc1=Math.min(step,N);
+    // draw cDNA bars under template at lane y
+    function cdna(L,procCount){
+      const y=yLane[L];
+      // indices processed: from N-1 down to N-procCount
+      let tMarks=0;
+      for(let k=0;k<procCount;k++){
+        const i=(N-1)-k;
+        const isMod=mods.includes(i);
+        const fill = (L===1&&isMod)?C.mutation : "#e9eef1";
+        el("rect",{x:xi(i)-13,y:y-12,width:26,height:24,rx:5,fill:fill,
+          stroke:(L===1&&isMod)?C.mutation:C.inkSoft,"stroke-width":1.3},cdnaG[L]);
+        if(L===1&&isMod){txt("✕",{x:xi(i),y:y+5,"text-anchor":"middle","font-size":12,fill:"#fff","font-weight":700},cdnaG[L]);tMarks++;}
+        // connector tick to template
+        el("line",{x1:xi(i),y1:yTplt+13,x2:xi(i),y2:y-12,stroke:C.line,"stroke-width":0.8,opacity:.5},cdnaG[L]);
+      }
+      return tMarks;
+    }
+    cdna(0,proc0);
+    const mapMarks=cdna(1,proc1);
+    // truncation "fall off" marker
+    if(proc0>=truncStop && truncStop>0){
+      const i=Math.max(...mods);
+      txt("RT falls off — read ends here",{x:xi(i),y:yLane[0]+34,"text-anchor":"middle",
+        "font-family":"var(--mono)","font-size":11,fill:C.inkSoft},cdnaG[0]);
+      el("path",{d:`M ${xi(i)} ${yLane[0]+18} l -5 8 l 10 0 z`,fill:C.inkSoft},cdnaG[0]);
+    }
+    // RT heads position
+    function placeHead(L,procCount,maxStop){
+      const g=rtHead[L];
+      if(procCount<=0){g.setAttribute("opacity",0);return;}
+      const i=(N-1)-procCount+1;
+      const x=xi(Math.max(0,i));
+      g.setAttribute("transform",`translate(${x},${yLane[L]})`);
+      const done=(L===0)?(procCount>=truncStop):(procCount>=N);
+      g.setAttribute("opacity",done?0:1);
+    }
+    placeHead(0,proc0);
+    placeHead(1,proc1);
+    // counters: truncation records exactly 1 mark once it reaches its stop (the most-3' mark)
+    const truncRec = (proc0>=truncStop&&truncStop>0)?1:0;
+    tOut.textContent=truncRec+"/3";
+    mOut.textContent=mapMarks+"/3";
+  }
+  function reset(){step=0;playing=false;if(raf)cancelAnimationFrame(raf);
+    document.getElementById('rtPlay').disabled=false;render();}
+  function advance(){if(step<N){step++;render();}}
+  function play(){
+    if(playing)return;playing=true;document.getElementById('rtPlay').disabled=true;
+    if(RM){step=N;render();playing=false;document.getElementById('rtPlay').disabled=false;return;}
+    let last=performance.now();const per=260;
+    function fr(now){if(!playing)return;
+      if(now-last>=per){advance();last=now;}
+      if(step>=N){playing=false;document.getElementById('rtPlay').disabled=false;return;}
+      raf=requestAnimationFrame(fr);}
+    raf=requestAnimationFrame(fr);
+  }
+  document.getElementById('rtPlay').addEventListener('click',play);
+  document.getElementById('rtStep').addEventListener('click',()=>{if(!playing)advance();});
+  document.getElementById('rtReset').addEventListener('click',reset);
+  render();
+})();
+
+/* ===================== 4 · PILEUP -> REACTIVITY ===================== */
+(function(){
+  const host=document.getElementById('pileSvg');
+  const W=960,Hbase=440;
+  const s=el("svg",{viewBox:`0 0 ${W} ${Hbase}`,role:"img","aria-label":"Read pileup and per-position reactivity"},host);
+  const seq=["G","C","A","U","G","A","C","A","G","C","A","U","G","C"];
+  const trueRate=[.02,.03,.42,.02,.02,.55,.38,.30,.02,.25,.48,.02,.02,.04];
+  const Npos=seq.length, cw=46, x0=90, yRef=42, yPile=64, rowH=11, maxRows=18;
+  // reference row
+  txt("ref",{x:x0-44,y:yRef+5,"font-family":"var(--mono)","font-size":12,fill:C.inkSoft},s);
+  for(let i=0;i<Npos;i++){
+    el("rect",{x:x0+i*cw,y:yRef-13,width:cw-6,height:24,rx:5,fill:"#fff",stroke:C.line},s);
+    txt(seq[i],{x:x0+i*cw+(cw-6)/2,y:yRef+5,"text-anchor":"middle","font-family":"var(--mono)","font-size":13,"font-weight":700,fill:C.ink},s);
+  }
+  txt("reads ↓",{x:x0-58,y:yPile+12,"font-family":"var(--mono)","font-size":11,fill:C.inkSoft},s);
+  const pileG=el("g",{},s);
+  // bars
+  const yBarTop=yPile+maxRows*rowH+26, barH=120;
+  const yBarBase=yBarTop+barH;
+  el("line",{x1:x0-6,y1:yBarBase,x2:x0+Npos*cw-6,y2:yBarBase,stroke:C.line,"stroke-width":1.5},s);
+  txt("mismatch ÷ total",{x:x0-44,y:yBarTop-8,"font-family":"var(--mono)","font-size":11,fill:C.reactive},s);
+  const barsG=el("g",{},s);
+  // true-rate dashed markers
+  for(let i=0;i<Npos;i++){
+    const y=yBarBase-trueRate[i]/0.6*barH;
+    el("line",{x1:x0+i*cw,y1:y,x2:x0+i*cw+cw-6,y2:y,stroke:C.inkSoft,"stroke-width":1.4,"stroke-dasharray":"3 3"},s);
+  }
+
+  let seed=12345;
+  const cov=document.getElementById('pileCov'), covN=document.getElementById('pileCovN');
+  function build(){
+    const N=+cov.value; covN.textContent=N+"×";
+    const rng=mulberry32(seed);
+    // generate N reads (store as boolean mismatch arrays)
+    const reads=[];
+    for(let r=0;r<N;r++){const row=[];for(let i=0;i<Npos;i++) row.push(rng()<trueRate[i]); reads.push(row);}
+    // pileup render (first maxRows)
+    pileG.textContent="";
+    const shown=Math.min(N,maxRows);
+    for(let r=0;r<shown;r++){const y=yPile+r*rowH;
+      for(let i=0;i<Npos;i++){
+        const mm=reads[r][i];
+        el("rect",{x:x0+i*cw+1,y:y,width:cw-8,height:rowH-2,rx:2,
+          fill:mm?C.mutation:"#eef1f4",stroke:mm?C.mutation:C.line,"stroke-width":mm?0:0.5},pileG);
+      }
+    }
+    if(N>maxRows) txt(`+ ${N-maxRows} more reads (used in the ratio)`,{x:x0,y:yPile+shown*rowH+14,
+      "font-family":"var(--mono)","font-size":11,fill:C.inkSoft},pileG);
+    // bars from all N
+    barsG.textContent="";
+    for(let i=0;i<Npos;i++){
+      let m=0;for(let r=0;r<N;r++) if(reads[r][i]) m++;
+      const rate=m/N, h=Math.min(rate/0.6,1)*barH;
+      el("rect",{x:x0+i*cw,y:yBarBase-h,width:cw-6,height:h,rx:2,fill:heat(rate/0.6)},barsG);
+    }
+  }
+  cov.addEventListener('input',build);
+  document.getElementById('pileRe').addEventListener('click',()=>{seed=(seed*1103515245+12345)>>>0;build();});
+  build();
+})();
+
+/* ===================== 5 · ENZYME ===================== */
+(function(){
+  const host=document.getElementById('enzSvg');
+  const W=960,H=300;
+  const s=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Enzyme mutation composition and homopolymer ambiguity"},host);
+  // left: two stacked bars
+  const data=[{name:"TGIRT",v:[94,5,1]},{name:"SSII–Mn²⁺",v:[71,20,9]}];
+  const colors=[C.mutation,"#c9a227",C.neutral];
+  const bx=60, bw=300, by=[80,170], bh=46;
+  data.forEach((d,r)=>{
+    txt(d.name,{x:bx,y:by[r]-12,"font-family":"var(--display)","font-size":14,"font-weight":600,fill:C.ink},s);
+    let acc=0;
+    d.v.forEach((v,k)=>{
+      const w=v/100*bw;
+      const rect=el("rect",{x:bx+acc,y:by[r],width:RM?w:0,height:bh,fill:colors[k],
+        rx:k===0?6:0},s);
+      if(!RM){setTimeout(()=>{rect.setAttribute("width",w);rect.style.transition="width .8s ease";},80+r*120);}
+      if(v>=8) txt(v+"%",{x:bx+acc+w/2,y:by[r]+bh/2+5,"text-anchor":"middle","font-family":"var(--mono)",
+        "font-size":13,"font-weight":700,fill:"#fff"},s);
+      acc+=w;
+    });
+    el("rect",{x:bx,y:by[r],width:bw,height:bh,fill:"none",stroke:C.line,rx:6},s);
+  });
+  txt("share of recorded mutations →",{x:bx,y:by[1]+bh+26,"font-family":"var(--mono)","font-size":11,fill:C.inkSoft},s);
+
+  // right: homopolymer ambiguity
+  const rx=460;
+  txt("a deletion in a run of A's",{x:rx,y:54,"font-family":"var(--display)","font-size":14,"font-weight":600,fill:C.ink},s);
+  const seq="AAAAA".split(""), hx=rx, hy=92, hw=40;
+  for(let i=0;i<5;i++){el("rect",{x:hx+i*hw,y:hy,width:hw-6,height:34,rx:5,fill:"#fff",stroke:C.line},s);
+    txt("A",{x:hx+i*hw+(hw-6)/2,y:hy+22,"text-anchor":"middle","font-family":"var(--mono)","font-size":14,"font-weight":700,fill:C.ink},s);}
+  txt("AAAA  (one base gone — but which?)",{x:rx,y:hy+74,"font-family":"var(--mono)","font-size":12,fill:"#c9a227"},s);
+  // brackets pointing to all five (ambiguous)
+  for(let i=0;i<5;i++){el("path",{d:`M ${hx+i*hw+(hw-6)/2} ${hy+38} l 0 14`,stroke:"#c9a227","stroke-width":1.4,"stroke-dasharray":"2 2"},s);}
+  // mismatch unambiguous
+  const my=hy+120;
+  txt("a mismatch names one position",{x:rx,y:my-6,"font-family":"var(--display)","font-size":14,"font-weight":600,fill:C.ink},s);
+  for(let i=0;i<5;i++){const isM=i===2;
+    el("rect",{x:hx+i*hw,y:my+8,width:hw-6,height:34,rx:5,fill:isM?C.mutation:"#fff",stroke:isM?C.mutation:C.line},s);
+    txt(isM?"G":"A",{x:hx+i*hw+(hw-6)/2,y:my+30,"text-anchor":"middle","font-family":"var(--mono)","font-size":14,"font-weight":700,fill:isM?"#fff":C.ink},s);}
+  el("path",{d:`M ${hx+2*hw+(hw-6)/2} ${my+46} l 0 12`,stroke:C.mutation,"stroke-width":1.6},s);
+  txt("position 3, unambiguous",{x:hx+2*hw+(hw-6)/2,y:my+74,"text-anchor":"middle","font-family":"var(--mono)","font-size":11,fill:C.mutation},s);
+})();
+
+/* ===================== 6 · RIBOSNITCH ===================== */
+(function(){
+  const host=document.getElementById('ribSvg');
+  const W=960,H=240;
+  const s=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Ribosnitch: combined versus allele-resolved reactivity"},host);
+  const Npos=16, cw=48, x0=70, base=H-46, maxH=120;
+  // flips marks bases that swap pairing between alleles
+  const flip=[false,false,false,true,false,true,false,false,true,false,false,true,false,false,true,false];
+  // allele A: starred bases OPEN; allele C: starred bases PAIRED. non-star bases share a backbone profile.
+  const shared=[.05,.42,.04,0,.50,0,.06,.40,0,.05,.38,0,.45,.05,0,.04];
+  function rate(allele,i){
+    if(!flip[i]) return shared[i];
+    // flipped: A allele open (~.5), C allele paired (~.03)
+    return allele==='A'?.52:.03;
+  }
+  let mode='combined';
+  const barsG=el("g",{},s), labG=el("g",{},s);
+  function draw(){
+    barsG.textContent="";labG.textContent="";
+    el("line",{x1:x0-6,y1:base,x2:x0+Npos*cw-6,y2:base,stroke:C.line,"stroke-width":1.5},barsG);
+    function bar(i,val,xoff,w,allele){
+      const h=Math.min(val/0.6,1)*maxH;
+      const open=val>0.2;
+      const fill = mode==='combined' ? heat(val/0.6)
+                 : (open?C.reactive:C.protect);
+      el("rect",{x:x0+i*cw+xoff,y:base-h,width:w,height:h,rx:2,fill:fill,opacity:mode==='combined'?1:.95},barsG);
+    }
+    if(mode==='combined'){
+      for(let i=0;i<Npos;i++){const v=(rate('A',i)+rate('C',i))/2; bar(i,v,2,cw-8);}
+    }else{
+      for(let i=0;i<Npos;i++){
+        bar(i,rate('A',i),2,(cw-10)/2,'A');
+        bar(i,rate('C',i),2+(cw-10)/2+2,(cw-10)/2,'C');
+      }
+      txt("allele A",{x:x0+2,y:18,"font-family":"var(--mono)","font-size":12,fill:C.reactive},labG);
+      txt("allele C",{x:x0+90,y:18,"font-family":"var(--mono)","font-size":12,fill:C.protect},labG);
+    }
+    // star flipped positions
+    for(let i=0;i<Npos;i++) if(flip[i])
+      txt("★",{x:x0+i*cw+(cw-6)/2-1,y:base+18,"text-anchor":"middle","font-size":12,fill:C.ink},labG);
+  }
+  draw();
+  const pills=document.getElementById('ribPills');
+  const note=document.getElementById('ribNote');
+  pills.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    mode=b.dataset.m;[...pills.children].forEach(c=>c.classList.toggle('on',c===b));
+    note.textContent = mode==='combined'
+      ? "averaging blurs both states into an uninformative middle"
+      : "split out, each allele shows a sharp, opposite pattern at the starred bases";
+    draw();});
+})();
+
+/* ===================== 7 · TARGETED WORKFLOW ===================== */
+(function(){
+  const host=document.getElementById('flowSvg');
+  const W=960,H=210;
+  const s=el("svg",{viewBox:`0 0 ${W} ${H}`,role:"img","aria-label":"Targeted DMS-MaPseq workflow steps"},host);
+  const steps=[
+    ["DMS in cells","mark open A/C in vivo",C.reactive],
+    ["extract RNA","total RNA, deplete rRNA",C.inkSoft],
+    ["targeted RT","gene-specific primer + TGIRT → mismatches",C.mutation],
+    ["targeted PCR","amplify just this transcript",C.inkSoft],
+    ["tagment + seq","fragment, index, sequence",C.protect],
+    ["ratio per base","mismatch ÷ total = structure signal",C.reactive],
+  ];
+  const n=steps.length, pad=30, gap=14, bw=(W-2*pad-(n-1)*gap)/n, by=70, bh=84;
+  steps.forEach((st,i)=>{
+    const x=pad+i*(bw+gap);
+    el("rect",{x:x,y:by,width:bw,height:bh,rx:11,fill:"#fff",stroke:C.line,"stroke-width":1.5},s);
+    el("rect",{x:x,y:by,width:bw,height:5,rx:2,fill:st[2]},s);
+    txt((i+1),{x:x+16,y:by+30,"font-family":"var(--mono)","font-size":13,"font-weight":700,fill:st[2]},s);
+    txt(st[0],{x:x+bw/2,y:by+34,"text-anchor":"middle","font-family":"var(--display)","font-size":13.5,"font-weight":600,fill:C.ink},s);
+    // wrap sub
+    wrap(st[1],x+bw/2,by+54,bw-18);
+    if(i<n-1) el("path",{d:`M ${x+bw+1} ${by+bh/2} l ${gap-4} 0 m -5 -4 l 5 4 l -5 4`,
+      stroke:C.inkSoft,fill:"none","stroke-width":1.4},s);
+  });
+  function wrap(text,cx,y,maxw){
+    const words=text.split(" ");let line="",lines=[];
+    words.forEach(w=>{const test=line?line+" "+w:w; if(test.length*5.4>maxw){lines.push(line);line=w;}else line=test;});
+    if(line)lines.push(line);
+    lines.slice(0,3).forEach((ln,k)=>txt(ln,{x:cx,y:y+k*13,"text-anchor":"middle",
+      "font-family":"var(--mono)","font-size":10.5,fill:C.inkSoft},s));
+  }
+})();
+</script>
+</body>
+</html>
